@@ -1,0 +1,3672 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Notebook — a quiet place to write</title>
+    <style>
+      :root {
+        --canvas: #f9f8f7;
+        --surface: #fff;
+        --soft: #f0efed;
+        --text: #2c2c2b;
+        --muted: #65635f;
+        --border: #dedbd6;
+        --accent: #2169ad;
+        --paper: #fff;
+        --ink: #2c2c2b;
+        --rule: #dce5eb;
+        --margin: #d3aaa5;
+        --writing-font: Georgia, "Times New Roman", serif;
+        --pitch: 36px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --canvas: #191919;
+          --surface: #202020;
+          --soft: #30302e;
+          --text: #f5f4f1;
+          --muted: #b9b6af;
+          --border: #494844;
+          --accent: #91c3f3;
+          --paper: #242421;
+          --ink: #eeeae0;
+          --rule: #41433f;
+          --margin: #77534e;
+        }
+      }
+      :root[data-theme="cream"] {
+        --paper: #fcf8ef;
+        --ink: #34312a;
+        --rule: #e1e3dc;
+        --margin: #cda7a0;
+      }
+      :root[data-theme="white"] {
+        --paper: #fff;
+        --ink: #2c2c2b;
+        --rule: #dce5eb;
+        --margin: #d3aaa5;
+      }
+      :root[data-theme="dark"] {
+        --paper: #242421;
+        --ink: #eeeae0;
+        --rule: #41433f;
+        --margin: #77534e;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--canvas);
+        color: var(--text);
+        font:
+          16px/1.5 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+        background: transparent;
+        color: inherit;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        min-height: 44px;
+        padding: 8px 12px;
+      }
+      button:hover {
+        background: var(--soft);
+      }
+      button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      textarea:focus-visible,
+      select:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
+      .primary {
+        background: var(--text);
+        color: var(--surface);
+      }
+      .primary:hover {
+        background: var(--muted);
+      }
+      .outline {
+        border-color: var(--border);
+      }
+      .danger {
+        color: #ab352d;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .small {
+        font-size: 14px;
+      }
+      .app {
+        max-width: 1180px;
+        margin: auto;
+        height: 100vh;
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        padding: 0 32px 24px;
+      }
+      .topbar {
+        min-height: 88px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-shrink: 0;
+      }
+      .brand {
+        font-family: Georgia, serif;
+        font-size: 25px;
+        letter-spacing: -0.8px;
+      }
+      .byline {
+        display: block;
+        margin-top: 2px;
+        font:
+          12px/1.4 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        letter-spacing: 0.2px;
+        color: var(--muted);
+      }
+      .writing .note-input:focus,
+      .writing .note-input:focus-visible,
+      .title:focus-visible {
+        outline: none;
+      }
+      .writing:focus-within::before {
+        width: 2px;
+        background: var(--ink);
+        opacity: 0.4;
+      }
+      .tagline {
+        font-size: 14px;
+        color: var(--muted);
+        border-left: 1px solid var(--border);
+        padding-left: 16px;
+      }
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+      }
+      .workspace {
+        display: grid;
+        grid-template-columns: 200px minmax(0, 1fr);
+        flex: 1;
+        min-height: 0;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--surface);
+      }
+      .sidebar {
+        padding: 24px 12px 12px;
+        background: var(--canvas);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .sidebar-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-left: 12px;
+      }
+      .eyebrow {
+        font-size: 14px;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: var(--muted);
+      }
+      .page-list {
+        list-style: none;
+        margin: 16px 0;
+        padding: 0;
+        overflow-y: auto;
+        flex: 1;
+      }
+      .page-list button {
+        display: flex;
+        width: 100%;
+        text-align: left;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 4px;
+      }
+      .page-list button[aria-current="page"] {
+        background: var(--soft);
+      }
+      .page-number {
+        font:
+          14px ui-monospace,
+          monospace;
+        color: var(--muted);
+        min-width: 24px;
+      }
+      .page-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 14px;
+      }
+      .sidebar-foot {
+        border-top: 1px solid var(--border);
+        padding: 16px 12px 4px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .editor {
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        background: var(--paper);
+        color: var(--ink);
+      }
+      .page-head {
+        padding: 28px 40px 24px 64px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-shrink: 0;
+      }
+      .page-meta {
+        font-size: 14px;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        opacity: 0.7;
+        margin-bottom: 8px;
+      }
+      .title {
+        font:
+          28px/1.3 Georgia,
+          serif;
+        width: 100%;
+        min-width: 0;
+        color: var(--ink);
+        background: transparent;
+        border: 0;
+        padding: 0 0 4px;
+        border-bottom: 1px solid transparent;
+      }
+      .title:focus {
+        border-bottom-color: var(--margin);
+      }
+      .heading-main {
+        min-width: 0;
+        flex: 1;
+      }
+      .date {
+        font-size: 14px;
+        opacity: 0.75;
+        white-space: nowrap;
+      }
+      .writing {
+        flex: 1;
+        min-height: 0;
+        position: relative;
+        margin: 0 24px 0 24px;
+      }
+      .writing:before {
+        content: "";
+        position: absolute;
+        left: 24px;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: var(--margin);
+        pointer-events: none;
+      }
+      .writing .note-input {
+        display: block;
+        width: 100%;
+        height: 100%;
+        resize: none;
+        border: 0;
+        outline-offset: -3px;
+        padding: 5px 24px 31px 40px;
+        background-color: transparent;
+        background-image: repeating-linear-gradient(
+          to bottom,
+          transparent 0,
+          transparent 35px,
+          var(--rule) 35px,
+          var(--rule) 36px
+        );
+        background-attachment: local;
+        color: var(--ink);
+        font-family: var(--writing-font);
+        font-size: 19px;
+        line-height: var(--pitch);
+        tab-size: 4;
+        caret-color: var(--ink);
+      }
+      textarea::placeholder {
+        color: var(--ink);
+        opacity: 0.7;
+      }
+      .editor-foot {
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        font-size: 14px;
+        border-top: 1px solid var(--rule);
+        flex-shrink: 0;
+      }
+      .pager {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .status {
+        min-height: 21px;
+        color: var(--muted);
+      }
+      .status.error {
+        color: #ab352d;
+      }
+      .counts {
+        opacity: 0.75;
+      }
+      .timer {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 14px;
+      }
+      .timer output {
+        font:
+          14px ui-monospace,
+          monospace;
+        font-variant-numeric: tabular-nums;
+        min-width: 48px;
+      }
+      .timer button {
+        padding: 6px 8px;
+      }
+      .mobile-pages {
+        display: none;
+      }
+      .notification {
+        display: none;
+        background: var(--soft);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        font-size: 14px;
+      }
+      .notification.visible {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .notification span {
+        flex: 1;
+        min-width: 180px;
+      }
+      dialog {
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+        width: min(480px, calc(100% - 32px));
+        max-height: 85dvh;
+        overflow: auto;
+      }
+      dialog::backdrop {
+        background: rgba(0, 0, 0, 0.3);
+      }
+      .dialog-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+      h2 {
+        font:
+          24px Georgia,
+          serif;
+        margin: 0;
+      }
+      h3 {
+        font-size: 16px;
+        margin: 24px 0 12px;
+      }
+      .setting {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin: 16px 0;
+      }
+      .setting select {
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        border-radius: 6px;
+        padding: 8px;
+        min-height: 44px;
+        max-width: 55%;
+      }
+      .setting input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--accent);
+      }
+      .backup-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .help {
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      .confirm-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 24px;
+      }
+      .title::placeholder {
+        color: var(--ink);
+        opacity: 0.7;
+      }
+      .editor .status {
+        color: var(--ink);
+        opacity: 0.75;
+      }
+      .editor .status.error {
+        color: #ab352d;
+        opacity: 1;
+      }
+      :root[data-theme="dark"] .editor .status.error {
+        color: #ffaba2;
+      }
+      #mobileTimerSlot {
+        display: none;
+      }
+      .setting {
+        min-height: 44px;
+      }
+      .setting input[type="checkbox"] {
+        flex-shrink: 0;
+      }
+      @media (max-width: 900px) {
+        .app {
+          padding: 0 16px 16px;
+        }
+        .topbar {
+          min-height: 76px;
+          gap: 8px;
+        }
+        .tagline {
+          display: none;
+        }
+        .workspace {
+          grid-template-columns: 1fr;
+          grid-template-rows: auto minmax(0, 1fr);
+        }
+        .editor {
+          grid-row: 2;
+        }
+        .sidebar {
+          grid-row: 1;
+        }
+        .mobile-pages {
+          display: block;
+        }
+        .sidebar {
+          display: none;
+          border-right: 0;
+          border-bottom: 1px solid var(--border);
+          padding: 8px 12px;
+          max-height: 200px;
+        }
+        .sidebar.open {
+          display: flex;
+        }
+        .sidebar-head {
+          min-height: 44px;
+        }
+        .page-list {
+          margin: 4px 0;
+        }
+        .sidebar-foot {
+          display: none;
+        }
+        .page-head {
+          padding: 24px 24px 20px 40px;
+          align-items: flex-start;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .date {
+          font-size: 14px;
+        }
+        .title {
+          font-size: 24px;
+        }
+        .writing {
+          margin: 0 12px;
+        }
+        .writing:before {
+          left: 16px;
+        }
+        .writing .note-input {
+          padding-left: 28px;
+          padding-right: 12px;
+          font-size: 18px;
+        }
+        .editor-foot {
+          padding: 8px 12px;
+          gap: 4px 12px;
+        }
+        .top-actions {
+          gap: 0;
+        }
+        .brand {
+          font-size: 23px;
+        }
+        #mobileTimerSlot {
+          display: block;
+        }
+        .top-actions > .timer {
+          display: none;
+        }
+        #mobileTimerSlot .timer {
+          display: flex;
+        }
+        .counts {
+          font-size: 14px;
+        }
+        .status {
+          font-size: 14px;
+        }
+        .pager button {
+          padding: 8px;
+        }
+        .editor {
+          min-height: 240px;
+        }
+      }
+      @media (max-width: 360px) {
+        .topbar {
+          flex-wrap: wrap;
+          padding: 12px 0;
+          gap: 4px;
+        }
+        .brand {
+          width: 100%;
+        }
+        .top-actions {
+          margin-left: 0;
+          justify-content: space-between;
+          width: 100%;
+        }
+      }
+      @media (max-height: 500px) {
+        .app {
+          height: auto;
+          min-height: 100dvh;
+        }
+        .workspace {
+          min-height: 400px;
+        }
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        button {
+          transition: background-color 0.15s;
+        }
+      }
+      @media (prefers-color-scheme: dark) {
+        .danger,
+        .editor .status.error {
+          color: #ffaba2;
+        }
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .mode-switch {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        margin-right: 8px;
+      }
+      .mode-switch button {
+        font-size: 14px;
+        color: var(--muted);
+        padding: 8px 12px;
+        white-space: nowrap;
+        transition: none;
+      }
+      .mode-switch button[aria-pressed="true"] {
+        background: var(--soft);
+        color: var(--text);
+      }
+      body[data-mode="test"] #pagesToggle,
+      body[data-mode="test"] #exportTxt,
+      body[data-mode="test"] .top-actions > .timer {
+        display: none;
+      }
+      #typingOptions .setting {
+        margin: 4px 0;
+      }
+      #typingOptions .dialog-head {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: var(--surface);
+      }
+      .test-screen {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        padding: 32px 48px;
+      }
+      .test-inner {
+        max-width: 820px;
+        margin: auto;
+      }
+      .test-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+      .test-heading h1 {
+        font:
+          30px/1.3 Georgia,
+          serif;
+        letter-spacing: -0.4px;
+        margin: 8px 0;
+      }
+      .test-heading p {
+        margin: 0;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .test-heading-actions {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .test-options {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .option-group {
+        display: flex;
+        gap: 4px;
+        background: var(--canvas);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 2px;
+      }
+      .option-group button {
+        font-size: 14px;
+        min-height: 44px;
+        color: var(--muted);
+        padding: 8px 12px;
+        transition: none;
+      }
+      .option-group button[aria-pressed="true"] {
+        background: var(--surface);
+        color: var(--text);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+      }
+      .test-message {
+        font-size: 14px;
+        color: var(--muted);
+        min-height: 21px;
+        margin: 8px 0;
+      }
+      .test-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 16px;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        padding: 20px 0;
+        margin-bottom: 24px;
+      }
+      .metric-label {
+        display: block;
+        font-size: 14px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      .metric-value {
+        font:
+          29px/1.2 Georgia,
+          serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .metric-unit {
+        font-size: 14px;
+        color: var(--muted);
+        margin-left: 4px;
+      }
+      .test-progress {
+        height: 2px;
+        background: var(--soft);
+        margin-top: -25px;
+        margin-bottom: 24px;
+      }
+      .test-progress span {
+        display: block;
+        height: 100%;
+        width: 0;
+        background: var(--accent);
+        transition: width 0.15s ease;
+      }
+      .sample-meta {
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 14px;
+        margin: 0 4px 8px;
+      }
+      .typing-surface {
+        position: relative;
+        height: 148px;
+        --practice-size: 19px;
+        --practice-line: 1.9;
+        overflow: hidden;
+        border-bottom: 1px solid var(--border);
+        border-radius: 0;
+      }
+      .typing-surface.focused {
+        border-bottom-color: var(--accent);
+      }
+      .test-passage {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        scrollbar-width: thin;
+        overscroll-behavior: contain;
+        padding: 16px 8px;
+        color: var(--muted);
+        font:
+          var(--practice-size)/var(--practice-line) -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        letter-spacing: 0.25px;
+        user-select: none;
+      }
+      .test-word {
+        display: inline-block;
+        white-space: nowrap;
+      }
+      .test-char {
+        position: relative;
+        transition:
+          color 0.1s,
+          background-color 0.1s;
+      }
+      .test-char.correct {
+        color: var(--text);
+      }
+      .test-char.wrong,
+      .test-char.skipped,
+      .test-char.extra {
+        color: #a3312a;
+        background: #fce9e7;
+        text-decoration: underline;
+        text-underline-offset: 4px;
+        text-decoration-thickness: 2px;
+        border-radius: 2px;
+      }
+      .test-char.skipped {
+        text-decoration-style: dashed;
+      }
+      .typing-overlay:disabled {
+        pointer-events: none;
+      }
+      .test-word.word-wrong .test-char {
+        color: #a3312a;
+        background: #fce9e7;
+        text-decoration: underline;
+        text-underline-offset: 4px;
+      }
+      .typing-surface[data-highlight="caret"] .test-char.correct {
+        color: var(--muted);
+      }
+      .typing-surface[data-display="tape"] {
+        height: 92px;
+      }
+      .typing-surface[data-display="tape"] .test-passage {
+        white-space: nowrap;
+        padding-top: 24px;
+        overflow-x: auto;
+        overflow-y: hidden;
+      }
+      .typing-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        border: 0;
+        padding: 16px 8px;
+        resize: none;
+        background: transparent;
+        color: transparent !important;
+        -webkit-text-fill-color: transparent;
+        caret-color: transparent;
+        outline: none !important;
+        opacity: 0.01;
+        font:
+          var(--practice-size)/var(--practice-line) -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        letter-spacing: 0.25px;
+        overflow: hidden;
+        cursor: text;
+      }
+      .typing-overlay::selection {
+        background: transparent;
+      }
+      .typing-caret {
+        position: absolute;
+        z-index: 1;
+        top: 0;
+        left: 0;
+        width: 2px;
+        height: 26px;
+        background: var(--accent);
+        pointer-events: none;
+        transition:
+          transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1),
+          height 0.1s;
+        opacity: 0.55;
+      }
+      .typing-surface.focused .typing-caret {
+        opacity: 1;
+      }
+      .test-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin: 12px 0;
+      }
+      .test-actions > .test-hint {
+        flex: 1;
+        min-width: 0;
+      }
+      .test-actions > button {
+        flex-shrink: 0;
+      }
+      .keyboard-row:last-child {
+        max-width: 55%;
+        margin: 5px auto;
+      }
+      .keyboard-row:nth-last-child(3) {
+        padding-left: 10px;
+      }
+      .test-hint {
+        font-size: 14px;
+        color: var(--muted);
+        margin: 0;
+        max-width: 570px;
+      }
+      .keyboard-panel {
+        max-width: 640px;
+        margin: 20px auto 0;
+        padding: 12px 16px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--canvas);
+      }
+      .keyboard-label {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+      .keyboard-row {
+        display: flex;
+        gap: 5px;
+        margin: 5px 0;
+        justify-content: center;
+      }
+      .kb-key {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        min-width: 0;
+        height: 30px;
+        border: 1px solid var(--border);
+        border-bottom-width: 2px;
+        border-radius: 4px;
+        background: var(--surface);
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1;
+        transition:
+          background-color 0.09s,
+          transform 0.09s,
+          border-color 0.09s;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.03);
+      }
+      .kb-key.wide {
+        flex: 1.6;
+      }
+      .kb-key.space {
+        flex: 6;
+      }
+      .kb-key.pressed {
+        transform: translateY(2px);
+        border-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+        color: var(--text);
+        box-shadow: none;
+      }
+      .kb-key.expected {
+        border-color: var(--accent);
+        border-style: dashed;
+      }
+      .test-accessible-prompt {
+        margin-top: 12px;
+      }
+      .test-accessible-prompt summary {
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 14px;
+        min-height: 44px;
+        padding: 10px 0;
+      }
+      .test-accessible-prompt p {
+        font-size: 16px;
+        line-height: 1.7;
+        max-height: 120px;
+        overflow: auto;
+        user-select: text;
+      }
+      .result-heading {
+        font:
+          26px Georgia,
+          serif;
+        margin: 24px 0 12px;
+      }
+      .result-summary {
+        max-width: 650px;
+        font-size: 16px;
+        line-height: 1.7;
+        color: var(--muted);
+      }
+      .best-label {
+        color: var(--accent);
+        font-size: 14px;
+        margin: 12px 0;
+      }
+      .score-details {
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--muted);
+        margin-top: 16px;
+      }
+      .score-details summary {
+        cursor: pointer;
+        min-height: 44px;
+        padding: 12px 0;
+        color: var(--text);
+      }
+      .score-details p {
+        margin: 8px 0;
+      }
+      .recent-tests {
+        margin-top: 32px;
+        border-top: 1px solid var(--border);
+        padding-top: 16px;
+      }
+      .recent-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+      }
+      .recent-head h2 {
+        font:
+          600 16px -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+      .recent-head button {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .history-empty {
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .recent-list {
+        list-style: none;
+        padding: 0;
+        margin: 8px 0;
+      }
+      .recent-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 14px;
+      }
+      .history-score {
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+      body[data-practice-smooth="false"] .typing-caret,
+      body[data-practice-smooth="false"] .test-char,
+      body[data-practice-smooth="false"] .kb-key,
+      body[data-practice-smooth="false"] .test-progress span {
+        transition: none;
+      }
+      @media (prefers-color-scheme: dark) {
+        .test-char.wrong,
+        .test-char.skipped,
+        .test-char.extra,
+        .test-word.word-wrong .test-char {
+          color: #ffb5ac;
+          background: #4b2926;
+        }
+      }
+      @media (max-width: 1100px) {
+        .topbar {
+          gap: 8px;
+        }
+        .mode-switch {
+          margin-right: 0;
+        }
+        .mode-switch button {
+          padding: 8px;
+        }
+      }
+      @media (max-width: 900px) {
+        .topbar {
+          flex-wrap: wrap;
+          padding: 12px 0;
+          gap: 8px;
+        }
+        .mode-switch {
+          order: 3;
+          flex-basis: 100%;
+          justify-content: center;
+          border-top: 1px solid var(--border);
+          padding-top: 8px;
+        }
+        .top-actions {
+          margin-left: auto;
+        }
+        .test-screen {
+          padding: 24px;
+        }
+        .test-heading {
+          gap: 12px;
+          margin-bottom: 20px;
+        }
+        .test-heading h1 {
+          font-size: 27px;
+        }
+        .test-heading-actions {
+          gap: 0;
+        }
+        .test-heading-actions button {
+          padding: 8px;
+          font-size: 14px;
+        }
+        .test-options {
+          gap: 8px;
+        }
+        .option-group button {
+          padding: 8px;
+        }
+        .test-metrics {
+          grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
+          gap: 8px;
+          padding: 16px 0;
+        }
+        .metric-value {
+          font-size: 25px;
+        }
+        .test-passage {
+          font-size: var(--practice-size);
+        }
+        .typing-surface {
+          height: 160px;
+        }
+        .keyboard-panel {
+          padding: 10px 8px;
+        }
+        .keyboard-row {
+          gap: 3px;
+          margin: 4px 0;
+        }
+        .kb-key {
+          height: 26px;
+          font-size: 11px;
+        }
+        .keyboard-label {
+          margin-bottom: 6px;
+        }
+        .keyboard-panel {
+          margin-top: 8px;
+        }
+        .test-hint {
+          font-size: 14px;
+        }
+        .test-actions {
+          margin-bottom: 8px;
+        }
+      }
+      @media (max-width: 400px) {
+        .test-screen {
+          padding: 20px 16px;
+        }
+        .test-heading {
+          gap: 8px;
+        }
+        .test-heading h1 {
+          font-size: 25px;
+        }
+        .test-heading-actions {
+          flex-direction: column;
+        }
+        .option-group button {
+          padding: 8px 4px;
+          min-width: 44px;
+        }
+        .test-metrics {
+          grid-template-columns: repeat(auto-fit, minmax(55px, 1fr));
+          gap: 4px;
+        }
+
+        .metric-value {
+          font-size: 24px;
+        }
+        .test-actions {
+          align-items: flex-start;
+        }
+        .kb-key {
+          font-size: 10px;
+        }
+        .keyboard-panel {
+          padding: 8px 6px;
+        }
+        .typing-surface {
+          height: 152px;
+        }
+        .keyboard-label {
+          font-size: 11px;
+        }
+      }
+      @media (max-width: 360px) {
+        .test-metrics .metric-unit {
+          display: block;
+          margin-left: 0;
+        }
+        .topbar .brand {
+          width: auto;
+        }
+        .topbar .top-actions {
+          width: auto;
+          margin-left: auto;
+          justify-content: flex-end;
+        }
+        .topbar {
+          gap: 4px;
+        }
+        .top-actions button {
+          padding: 8px;
+          font-size: 14px;
+        }
+        .brand {
+          font-size: 21px;
+        }
+        .keyboard-row {
+          gap: 2px;
+        }
+        .test-heading h1 {
+          font-size: 24px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .typing-caret,
+        .test-char,
+        .kb-key,
+        .test-progress span {
+          transition: none !important;
+        }
+        .kb-key.pressed {
+          transform: none;
+        }
+      }
+      .editor { overflow-y:auto; }
+      .writing { min-height:180px; }
+      .note-toolbar { flex-shrink:0; padding:0 24px 16px 64px; font-size:14px; }
+      .note-controls,.mark-controls { display:flex; align-items:flex-end; flex-wrap:wrap; gap:8px; }
+      .note-toolbar label { display:flex; flex-direction:column; gap:4px; color:var(--muted); font-size:14px; }
+      .note-toolbar select { min-height:44px; max-width:160px; padding:8px; border:1px solid var(--border); border-radius:6px; font-size:14px; color:var(--text); background:var(--paper); }
+      .note-toolbar button { font-size:14px; min-height:44px; }
+      #markTools { margin-top:12px; border-top:1px solid var(--border); padding-top:12px; }
+      .mark-help { color:var(--muted); font-size:13px; line-height:1.5; margin:8px 0 0; }
+      .note-mirror { position:absolute; inset:0; overflow:hidden; pointer-events:none; display:none; z-index:1; }
+      #noteMirrorText { white-space:pre-wrap; overflow-wrap:break-word; box-sizing:border-box; color:var(--ink); }
+      .writing.has-marks .note-mirror { display:none; }
+      .writing.has-marks .note-input { color:var(--ink); }
+      .writing.has-marks .note-input::selection { background:rgba(39,131,222,.22); }
+      :is(.note-mirror,#content) span { border-radius:2px; }
+      :is(.note-mirror,#content) [data-highlight="yellow"] { background:#f6e7a7; color:#302b1b; }
+      :is(.note-mirror,#content) [data-highlight="green"] { background:#cfe5ce; color:#1f392a; }
+      :is(.note-mirror,#content) [data-highlight="blue"] { background:#cfe4f5; color:#233744; }
+      :is(.note-mirror,#content) [data-highlight="pink"] { background:#f0d5df; color:#412532; }
+      :is(.note-mirror,#content) [data-color="blue"] { color:#17548b; }
+      :is(.note-mirror,#content) [data-color="red"] { color:#a52b2b; }
+      :is(.note-mirror,#content) [data-color="green"] { color:#246044; }
+      :is(.note-mirror,#content) [data-color="purple"] { color:#704198; }
+      :root[data-theme="dark"] :is(.note-mirror,#content) span:not([data-highlight])[data-color="blue"] { color:#8bc4f4; }
+      :root[data-theme="dark"] :is(.note-mirror,#content) span:not([data-highlight])[data-color="red"] { color:#ffa49e; }
+      :root[data-theme="dark"] :is(.note-mirror,#content) span:not([data-highlight])[data-color="green"] { color:#99d4b5; }
+      :root[data-theme="dark"] :is(.note-mirror,#content) span:not([data-highlight])[data-color="purple"] { color:#d7b0fa; }
+      .writing:before { z-index:2; }
+      .drawing-canvas { position:absolute; inset:0; z-index:3; width:100%; height:100%; pointer-events:none; touch-action:none; }
+      .writing.drawing-active .drawing-canvas { pointer-events:auto; cursor:crosshair; }
+      .writing.drawing-active .note-input { caret-color:transparent; }
+      .writing.drawing-active .note-mirror { pointer-events:none; }
+      .drawing-status { color:var(--accent); font-weight:600; }
+      #markTools { max-height:220px; overflow:auto; }
+      @media (prefers-color-scheme:dark) {
+        :root:not([data-theme="white"]):not([data-theme="cream"]) :is(.note-mirror,#content) span:not([data-highlight])[data-color="blue"] { color:#8bc4f4; }
+        :root:not([data-theme="white"]):not([data-theme="cream"]) :is(.note-mirror,#content) span:not([data-highlight])[data-color="red"] { color:#ffa49e; }
+        :root:not([data-theme="white"]):not([data-theme="cream"]) :is(.note-mirror,#content) span:not([data-highlight])[data-color="green"] { color:#99d4b5; }
+        :root:not([data-theme="white"]):not([data-theme="cream"]) :is(.note-mirror,#content) span:not([data-highlight])[data-color="purple"] { color:#d7b0fa; }
+      }
+      .writing[data-template="blank"]:before,.writing[data-template="grid"]:before,.writing[data-template="dotted"]:before { display:none; }
+      .writing[data-template="blank"] .note-input { background-image:none; }
+      .writing[data-template="grid"] .note-input { background-image:linear-gradient(var(--rule) 1px,transparent 1px),linear-gradient(90deg,var(--rule) 1px,transparent 1px); background-size:18px 18px; }
+      .writing[data-template="dotted"] .note-input { background-image:radial-gradient(circle,var(--rule) 1px,transparent 1.5px); background-size:18px 18px; }
+      .writing[data-template="wide"] .note-input { background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 43px,var(--rule) 43px,var(--rule) 44px); }
+      @media(max-width:900px) { .note-toolbar { padding:0 12px 12px 40px; } .note-toolbar select { max-width:135px; } .note-toolbar button { padding:8px; } }
+      @media(max-width:400px) { .note-toolbar { padding-left:16px; } .note-controls { gap:6px; } .note-toolbar select { max-width:120px; } .note-toolbar button { font-size:13px; } }
+
+
+      /* Paper controls must follow the paper, not the surrounding OS theme. */
+      :root { color-scheme:light; --paper-muted:#65635f; --paper-border:#a29e96; --paper-soft:#f0efed; --paper-accent:#2169ad; --paper-danger:#ab352d; }
+      @media(prefers-color-scheme:dark) {
+        :root { color-scheme:dark; }
+        :root:not([data-theme="white"]):not([data-theme="cream"]) { --paper-muted:#b9b6af; --paper-border:#77776f; --paper-soft:#383836; --paper-accent:#91c3f3; --paper-danger:#ffaba2; }
+        :root:not([data-theme="white"]):not([data-theme="cream"]) .editor { color-scheme:dark; }
+      }
+      :root[data-theme="dark"] { --paper-muted:#b9b6af; --paper-border:#77776f; --paper-soft:#383836; --paper-accent:#91c3f3; --paper-danger:#ffaba2; }
+      .editor { --text:var(--ink); --muted:var(--paper-muted); --border:var(--paper-border); --soft:var(--paper-soft); --accent:var(--paper-accent); color-scheme:light; }
+      :root[data-theme="dark"] .editor { color-scheme:dark; }
+      :root[data-theme="white"] .editor,:root[data-theme="cream"] .editor { color-scheme:light; }
+      select option { color:var(--text); background:var(--surface); }
+      .note-toolbar select,.note-toolbar select option { color:var(--ink); background:var(--paper); }
+      .editor .danger,.editor .status.error { color:var(--paper-danger); }
+      .note-input { overflow:auto; white-space:pre-wrap; overflow-wrap:break-word; position:relative; }
+      .note-input:empty::before { content:attr(data-placeholder); opacity:.7; pointer-events:none; }
+      .note-input:focus-visible { outline:none; }
+      #fontHelp { color:var(--muted); margin:8px 0 0; font-size:14px; line-height:1.5; }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          Notebook<span style="color: var(--accent)">.</span
+          ><span class="byline">By S.A. RAFi</span>
+        </div>
+        <nav class="mode-switch" aria-label="Notebook mode">
+          <button id="notebookMode" aria-pressed="true">Notebook</button
+          ><button id="typingMode" aria-pressed="false">Typing test</button>
+        </nav>
+        <div class="top-actions">
+          <button
+            id="pagesToggle"
+            class="mobile-pages"
+            aria-controls="sidebar"
+            aria-expanded="false"
+          >
+            Pages
+          </button>
+          <div id="timerControls" class="timer">
+            <output id="timerDisplay" aria-label="Elapsed time">00:00</output
+            ><button id="timerBtn">Start</button
+            ><button id="resetTimer" aria-label="Reset timer">Reset</button>
+          </div>
+          <button id="exportTxt" class="outline">Export</button
+          ><button id="settingsBtn" aria-label="Open notebook settings">Settings</button>
+        </div>
+      </header>
+      <div id="notice" class="notification" role="status">
+        <span id="noticeText"></span><button id="noticeAction" class="outline" hidden></button
+        ><button id="noticeClose" aria-label="Dismiss notification">×</button>
+      </div>
+      <main class="workspace">
+        <nav id="sidebar" class="sidebar" aria-label="Notebook pages">
+          <div class="sidebar-head">
+            <span class="eyebrow">Your pages</span
+            ><button id="addPage" aria-label="Add new page">＋</button>
+          </div>
+          <ol id="pageList" class="page-list"></ol>
+          <div class="sidebar-foot">Just you and the page.<br /><span id="totalPages"></span></div>
+        </nav>
+        <section class="editor" aria-label="Current page">
+          <header class="page-head">
+            <div class="heading-main">
+              <div id="pageLabel" class="page-meta">Page 01</div>
+              <label for="pageTitle" class="sr-only">Page title</label
+              ><input
+                id="pageTitle"
+                class="title"
+                maxlength="300"
+                placeholder="Untitled page"
+                autocomplete="off"
+              />
+            </div>
+            <time id="pageDate" class="date"></time>
+          </header>
+<section class="note-toolbar" aria-label="Notebook page tools">
+<div class="note-controls"><label>Font<select id="noteFont" aria-label="Note font"></select></label><label>Page style<select id="pageTemplate" aria-label="Page template"><option value="ruled">Ruled</option><option value="blank">Blank</option><option value="grid">Grid</option><option value="dotted">Dotted</option><option value="wide">Wide ruled</option></select></label><button id="markToolsToggle" class="outline" aria-expanded="false" aria-controls="markTools">Marking tools</button></div>
+<div id="markTools" hidden><div class="mark-controls"><label>Highlight<select id="markHighlight"><option value="yellow">Yellow</option><option value="green">Green</option><option value="blue">Blue</option><option value="pink">Pink</option></select></label><button id="highlightSelection" class="outline">Highlight</button><button id="highlightLine" class="outline">Mark line</button><label>Text color<select id="markColor"><option value="blue">Blue</option><option value="red">Red</option><option value="green">Green</option><option value="purple">Purple</option><option value="ink">Default ink</option></select></label><button id="colorSelection" class="outline">Color selection</button><button id="typingColorToggle" class="outline" aria-pressed="false">Type in this color</button><button id="underlineSelection" class="outline">Underline</button><button id="clearSelection" class="outline">Clear marks</button><button id="undoMark" class="outline" disabled>Undo mark</button></div><div class="mark-controls" style="margin-top:8px"><button id="drawToggle" class="outline" aria-pressed="false">Pencil</button><label>Ink<input id="drawColor" type="color" value="#2783de" aria-label="Drawing ink color" /></label><label>Stroke<select id="drawSize" aria-label="Drawing stroke width"><option value="2">Fine</option><option value="4" selected>Medium</option><option value="7">Bold</option></select></label><button id="undoDrawing" class="outline" disabled>Undo stroke</button><button id="clearDrawing" class="outline" disabled>Clear drawing</button><button id="addBlankPage" class="outline">New blank page</button><button id="exportStyled" class="outline">Export styled</button></div><p id="markHelp" class="mark-help" role="status">Select text to highlight, color or underline. Mark line colors a whole paragraph; place the caret on it first.</p></div><p id="fontHelp" role="status">Font applies to selected text, or to what you type next. Select all note text to change the whole note.</p></section>
+          <div class="writing">
+            <div id="noteMirror" class="note-mirror" aria-hidden="true"><div id="noteMirrorText"></div></div>
+            <canvas id="drawingCanvas" class="drawing-canvas" aria-label="Drawing canvas"></canvas>
+            <label for="content" class="sr-only">Write your notes</label
+            ><div id="content" class="note-input" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Write your notes" data-placeholder="Start with a thought…" spellcheck="false" autocorrect="off" autocapitalize="off"></div>
+          </div>
+          <footer class="editor-foot">
+            <div>
+              <span id="saveStatus" class="status" role="status" aria-live="polite">Ready</span
+              ><span class="counts"> · <span id="counts">0 words</span></span>
+            </div>
+            <div class="pager">
+              <button id="prev" aria-label="Previous page">←</button
+              ><span id="position" class="small">1 / 1</span
+              ><button id="next" aria-label="Next page or add a new page">→</button
+              ><button id="deletePage" class="danger" aria-label="Delete current page">
+                Delete
+              </button>
+            </div>
+          </footer>
+        </section>
+      </main>
+      <main id="testScreen" class="test-screen" hidden aria-labelledby="testTitle">
+        <div class="test-inner">
+          <header class="test-heading">
+            <div>
+              <span class="eyebrow">English only</span>
+              <h1 id="testTitle">Typing practice</h1>
+              <p>A short passage. No countdown.</p>
+            </div>
+            <div class="test-heading-actions">
+              <button id="typingOptionsBtn" class="outline">Options</button
+              ><button id="testRestart" aria-label="Restart typing practice">Restart</button>
+            </div>
+          </header>
+          <div class="test-options">
+            <div class="option-group" role="group" aria-label="Difficulty">
+              <button data-level="normal" aria-pressed="true">Normal</button
+              ><button data-level="medium" aria-pressed="false">Medium</button
+              ><button data-level="hard" aria-pressed="false">Hard</button>
+            </div>
+            <div class="option-group" role="group" aria-label="Text style">
+              <button data-kind="words" aria-pressed="true">Words</button
+              ><button data-kind="sentences" aria-pressed="false">Sentences</button>
+            </div>
+          </div>
+          <p id="testPhaseText" class="test-message" role="status">
+            Click the passage and begin. There is no time limit.
+          </p>
+          <div class="test-metrics" aria-label="Practice metrics">
+            <div>
+              <span class="metric-label">Progress</span
+              ><span id="testProgressValue" class="metric-value">0</span
+              ><span class="metric-unit">%</span>
+            </div>
+            <div id="speedMetric">
+              <span class="metric-label">Speed</span><span id="testWpm" class="metric-value">0</span
+              ><span class="metric-unit">wpm</span>
+            </div>
+            <div>
+              <span class="metric-label">Accuracy</span
+              ><span id="testAccuracy" class="metric-value">—</span
+              ><span class="metric-unit">%</span>
+            </div>
+            <div>
+              <span class="metric-label">Mistakes</span
+              ><span id="testErrors" class="metric-value">0</span>
+            </div>
+          </div>
+          <div class="test-progress" aria-hidden="true"><span id="testProgress"></span></div>
+          <div id="testArena">
+            <div class="sample-meta">
+              <span id="sampleLength">12 words</span
+              ><span id="elapsedLabel" hidden
+                >Elapsed <output id="elapsedDisplay">00:00</output></span
+              >
+            </div>
+            <div
+              id="typingSurface"
+              class="typing-surface"
+              data-display="passage"
+              data-highlight="character"
+            >
+              <div id="testPassage" class="test-passage" aria-hidden="true"></div>
+              <div id="typingCaret" class="typing-caret" aria-hidden="true"></div>
+              <label for="testInput" class="sr-only">Type directly on the displayed passage</label
+              ><textarea
+                id="testInput"
+                class="typing-overlay"
+                spellcheck="false"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                aria-describedby="testInstructions"
+                aria-controls="testPassage"
+              ></textarea>
+            </div>
+            <div class="test-actions">
+              <p id="testInstructions" class="test-hint">Backspace corrects. Space advances.</p>
+              <button id="finishPractice" class="outline" disabled>Finish here</button>
+            </div>
+            <div id="keyboardPanel" class="keyboard-panel" aria-hidden="true">
+              <div class="keyboard-label">
+                <span>Keyboard</span><span id="keyFeedback">Ready</span>
+              </div>
+              <div id="virtualKeyboard" class="virtual-keyboard"></div>
+            </div>
+            <details class="test-accessible-prompt">
+              <summary>Read the reference text</summary>
+              <p id="testReference"></p>
+            </details>
+          </div>
+          <section id="testResults" hidden aria-labelledby="resultsTitle">
+            <h2 id="resultsTitle" class="result-heading">Practice complete.</h2>
+            <p id="testSummary" class="result-summary"></p>
+            <p id="testBest" class="best-label"></p>
+            <div class="backup-actions">
+              <button id="testAgain" class="primary">Try another</button
+              ><button id="returnNotebook" class="outline">Back to notebook</button>
+            </div>
+            <details class="score-details">
+              <summary>How your score is calculated</summary>
+              <p>
+                WPM = correctly matched characters ÷ 5 ÷ elapsed minutes. Raw WPM counts inserted
+                character attempts. Speed is measured after at least one second; there is no
+                deadline.
+              </p>
+              <p>
+                Accuracy is the share of correctly matched characters among reached characters and
+                inserted extras. Corrections improve current accuracy; raw speed still counts
+                retyped character attempts. Space (or Finish here) commits the current word: omitted
+                letters turn red, and the next word stays aligned. Progress shows how far you
+                reached, not how much was correct.
+              </p>
+              <p>
+                Only fully completed, non-interrupted passages with at least 90% accuracy are
+                compared for personal bests. Comparisons use the same difficulty, text style,
+                punctuation and number settings.
+              </p>
+            </details>
+          </section>
+          <section class="recent-tests" aria-labelledby="recentTitle">
+            <div class="recent-head">
+              <h2 id="recentTitle">Recent practice</h2>
+              <button id="clearTestHistory">Clear history</button>
+            </div>
+            <p id="testHistoryNote" class="history-empty">
+              Saved only in this browser. Separate from notebook pages.
+            </p>
+            <ol id="testHistory" class="recent-list"></ol>
+          </section>
+        </div>
+      </main>
+      <dialog id="typingOptions" aria-labelledby="typingOptionsTitle">
+        <div class="dialog-head">
+          <h2 id="typingOptionsTitle">Practice options</h2>
+          <button id="closeTypingOptions" aria-label="Close practice options">×</button>
+        </div>
+        <label class="setting"
+          >Display<select id="practiceDisplay">
+            <option value="passage">Full passage</option>
+            <option value="tape">Focus line</option>
+          </select></label
+        >
+        <label class="setting"
+          >Highlight<select id="practiceHighlight">
+            <option value="character">Character</option>
+            <option value="word">Word</option>
+            <option value="caret">Caret + errors</option>
+          </select></label
+        >
+        <label class="setting"
+          >Text size<select id="practiceSize">
+            <option value="small">Small</option>
+            <option value="regular">Regular</option>
+            <option value="large">Large</option>
+          </select></label
+        >
+        <label class="setting">Punctuation<input id="practicePunctuation" type="checkbox" /></label
+        ><label class="setting">Numbers<input id="practiceNumbers" type="checkbox" /></label>
+        <p class="help">Passage options are locked during an attempt. Restart to change them.</p>
+        <label class="setting">Show WPM<input id="practiceWpm" type="checkbox" checked /></label
+        ><label class="setting"
+          >Show elapsed time<input id="practiceElapsed" type="checkbox" /></label
+        ><label class="setting"
+          >Keyboard animation<input id="practiceKeyboard" type="checkbox" checked /></label
+        ><label class="setting">Next-key guide<input id="practiceGuide" type="checkbox" /></label
+        ><label class="setting"
+          >Smooth movement<input id="practiceSmooth" type="checkbox" checked
+        /></label>
+        <p id="practiceOptionsNotice" class="help" role="status"></p>
+        <p class="help">
+          No time limit. English only. Display options do not change your notebook.
+        </p>
+      </dialog>
+    </div>
+    <dialog id="settings" aria-labelledby="settingsTitle">
+      <div class="dialog-head">
+        <h2 id="settingsTitle">Make it yours</h2>
+        <button id="closeSettings" aria-label="Close settings">×</button>
+      </div>
+      <label class="setting"
+        >Paper<select id="theme">
+          <option value="auto">System</option>
+          <option value="cream">Warm paper</option>
+          <option value="white">White paper</option>
+          <option value="dark">Night paper</option>
+        </select></label
+      ><label class="setting"
+        >Writing style<select id="font">
+          <option value="serif">Book serif</option>
+          <option value="sans">Clean sans</option>
+          <option value="mono">Monospace</option><option value="palatino">Palatino</option><option value="baskerville">Baskerville</option><option value="times">Times</option><option value="garamond">Garamond</option><option value="verdana">Verdana</option><option value="trebuchet">Trebuchet</option><option value="courier">Courier</option><option value="handwritten">Handwritten</option>
+        </select></label
+      ><label class="setting">Page sound<input id="sound" type="checkbox" /></label
+      ><label class="setting">Notebook practice mode<input id="practice" type="checkbox" /></label>
+      <p class="help">
+        Practice mode blocks copy, cut, paste and drop in the writing area. It is a writing
+        exercise, not a security feature.
+      </p>
+      <div id="mobileTimerSlot"><h3>Writing timer</h3></div>
+      <h3>A copy to keep</h3>
+      <p class="help">
+        Notes stay in this browser. Clearing browser data can remove them. Download a JSON backup to
+        restore all pages and settings.
+      </p>
+      <div class="backup-actions">
+        <button id="backup" class="outline">Download backup</button
+        ><button id="importBtn" class="outline">Restore backup</button
+        ><input id="importFile" type="file" accept=".json,application/json" hidden />
+      </div>
+      <p id="backupMessage" class="help" role="status"></p>
+      <p class="help">Fonts use the families installed on your device, with safe fallbacks. No account, external fonts or network requests.</p>
+    </dialog>
+    <dialog id="confirmation" aria-labelledby="confirmTitle" aria-describedby="confirmText">
+      <h2 id="confirmTitle">Delete page?</h2>
+      <p id="confirmText"></p>
+      <div class="confirm-actions">
+        <button id="cancelConfirm" class="outline">Cancel</button
+        ><button id="acceptConfirm" class="primary">Confirm</button>
+      </div>
+    </dialog>
+    <script>
+      "use strict";
+      (() => {
+        const KEY = "QUIET_NOTEBOOK_V1",
+          LEGACY = "REALISTIC_SPIRAL_NOTEBOOK_FULLSIZE_V5";
+        const $ = (id) => document.getElementById(id),
+          editor = $("content");
+        const makeId = () =>
+          globalThis.crypto?.randomUUID?.() ||
+          `p-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        const today = () => new Date().toISOString();
+        const newPage = () => ({ id: makeId(), title: "", date: today(), content: "", template: "ruled", fontBase:"serif", marks: [], drawings: [] });
+        const defaults = () => {
+          const p = newPage();
+          return {
+            version: 1,
+            currentPageId: p.id,
+            settings: { theme: "auto", font: "serif", sound: false, practice: false },
+            pages: [p],
+          };
+        };
+        let state = defaults(),
+          saveTimer = null,
+          dirty = false,
+          blocked = false,
+          lastRaw = null,
+          undo = null,
+          noticeHandler = null,
+          confirmHandler = null,
+          audio = null;
+        const fonts = {
+          serif: "Georgia, 'Times New Roman', serif",
+          sans: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+          mono: "ui-monospace, Consolas, monospace",
+          palatino: "'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif",
+          baskerville: "Baskerville, 'Baskerville Old Face', 'Times New Roman', serif",
+          times: "'Times New Roman', Times, serif",
+          garamond: "Garamond, 'EB Garamond', Georgia, serif",
+          verdana: "Verdana, Geneva, sans-serif",
+          trebuchet: "'Trebuchet MS', Arial, sans-serif",
+          courier: "'Courier New', Courier, monospace",
+          handwritten: "'Comic Sans MS', 'Comic Sans', cursive",
+
+        };
+        let selection = { start:0,end:0,id:null }, markUndo = [], activeTypingColor = null;
+        let pendingTextEdit=null, textHistory=[], textHistoryIndex=-1, drawingPointsRemaining=0;
+        let composingNote=false, cachedNoteSelection={start:0,end:0};
+
+        function noteText(node=editor) {
+          let out="";
+          const walk=n=>{
+            if(n.nodeType===3) {out+=n.data;return;}
+            if(n.nodeType!==1 || n.dataset.tail) return;
+            if(n.tagName==="BR") {
+              const parent=n.parentNode;
+              if(parent.childNodes.length===1 || (!n.nextSibling && n.previousSibling?.nodeName==="BR")) return;
+              out+="\n";return;
+            }
+            if((n.tagName==="DIV" || n.tagName==="P") && n!==editor && n.previousSibling) out+="\n";
+            for(const child of n.childNodes) walk(child);
+          };
+          walk(node); return out;
+        }
+        function noteRange() {
+          const sel=window.getSelection();
+          if(sel?.rangeCount && editor.contains(sel.anchorNode) && editor.contains(sel.focusNode)) {
+            const range=sel.getRangeAt(0), a=range.cloneRange(), b=range.cloneRange();
+            a.selectNodeContents(editor);a.setEnd(range.startContainer,range.startOffset);
+            b.selectNodeContents(editor);b.setEnd(range.endContainer,range.endOffset);
+            cachedNoteSelection={start:a.toString().length,end:b.toString().length};
+          }
+          return {...cachedNoteSelection};
+        }
+        function setNoteRange(start,end=start) {
+          const length=noteText().length;start=Math.max(0,Math.min(start,length));end=Math.max(start,Math.min(end,length));
+          const locate=offset=>{
+            const walker=document.createTreeWalker(editor,NodeFilter.SHOW_TEXT);let node,remaining=offset,last=null;
+            while(node=walker.nextNode()) {last=node;if(remaining<=node.length) return [node,remaining];remaining-=node.length;}
+            return last?[last,last.length]:[editor,0];
+          };
+          const [a,ao]=locate(start),[b,bo]=locate(end),range=document.createRange();range.setStart(a,ao);range.setEnd(b,bo);
+          const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);cachedNoteSelection={start,end};
+        }
+        function replaceNoteSelection(text,inputType="insertText") {
+          const old=editor.value,{start,end}=noteRange();
+          pendingTextEdit={oldText:old,start,oldEnd:end,inputType};
+          editor.value=old.slice(0,start)+text+old.slice(end);editor.setSelectionRange(start+text.length);
+          sync(inputType);updateCounts();changed();rememberSelection();
+        }
+        function noteHistoryStep(redo=false) {
+          if(textHistoryIndex<0) return;
+          textHistory[textHistoryIndex].marks=structuredClone(current().marks||[]);
+          const target=textHistoryIndex+(redo?1:-1);if(target<0 || target>=textHistory.length) return;
+          const snapshot=textHistory[target],p=current();textHistoryIndex=target;
+          p.content=snapshot.content;p.marks=structuredClone(snapshot.marks);editor.value=p.content;
+          cachedNoteSelection={start:p.content.length,end:p.content.length};markUndo=[];pendingTextEdit=null;
+          paintNote();editor.focus({preventScroll:true});editor.setSelectionRange(p.content.length);updateCounts();changed();rememberSelection();
+        }
+        function chooseNoteFont(font) {
+          if(!Object.hasOwn(fonts,font)) return;
+          sync();const p=current(), saved=selection.id===p.id?selection:noteRange();
+          state.settings.font=font;applySettings();
+          if(saved.end>saved.start) {
+            selection={...saved,id:p.id};markRange("font",font);
+            $("fontHelp").textContent="Font changed for selected text only. New typing will also use this font.";
+          } else {
+            if(drawingActive) setDrawingActive(false);
+            editor.focus({preventScroll:true});editor.setSelectionRange(saved.start,saved.end);rememberSelection();
+            $("fontHelp").textContent="Font set for new typing. Existing text is unchanged.";
+          }
+          changed();
+        }
+        function setupRichEditor() {
+          Object.defineProperties(editor,{
+            value:{get:()=>noteText(),set:text=>{editor.textContent=text;cachedNoteSelection={start:0,end:0};}},
+            selectionStart:{get:()=>noteRange().start},selectionEnd:{get:()=>noteRange().end}
+          });
+          editor.setSelectionRange=setNoteRange;
+          editor.addEventListener("compositionstart",()=>{composingNote=true;});
+          editor.addEventListener("compositionend",()=>{composingNote=false;sync();updateCounts();changed();});
+          editor.addEventListener("keydown",e=>{
+            if((e.ctrlKey||e.metaKey) && ["z","y"].includes(e.key.toLowerCase()) && !e.altKey) {
+              e.preventDefault();noteHistoryStep(e.shiftKey||e.key.toLowerCase()==="y");
+            }
+          });
+          editor.addEventListener("beforeinput",e=>{
+            if(["historyUndo","historyRedo"].includes(e.inputType)) {e.preventDefault();noteHistoryStep(e.inputType==="historyRedo");}
+            else if(["insertParagraph","insertLineBreak"].includes(e.inputType)) {e.preventDefault();replaceNoteSelection("\n",e.inputType);}
+          });
+          editor.addEventListener("paste",e=>{
+            if(state.settings.practice || !e.clipboardData) return;
+            e.preventDefault();replaceNoteSelection(e.clipboardData.getData("text/plain"),"insertFromPaste");
+          });
+          editor.addEventListener("drop",e=>{
+            if(state.settings.practice || !e.dataTransfer) return;
+            e.preventDefault();const r=document.caretRangeFromPoint?.(e.clientX,e.clientY);
+            if(r && editor.contains(r.startContainer)) {const sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);}
+            replaceNoteSelection(e.dataTransfer.getData("text/plain"),"insertFromDrop");
+          });
+        }
+        const validTemplate = t => ["ruled","blank","grid","dotted","wide"].includes(t) ? t : "ruled";
+        const highlightNames = ["yellow","green","blue","pink"], colorNames = ["blue","red","green","purple"];
+        const hexColor = c => typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c);
+        function validateDrawings(drawings) {
+          if (drawings === undefined) return [];
+          if (!Array.isArray(drawings) || drawings.length > 2000) throw Error("Invalid drawing data");
+          let points = 0;
+          return drawings.map(stroke => {
+            if (!stroke || !hexColor(stroke.color) || ![2,4,7].includes(stroke.size) || !Array.isArray(stroke.points) || stroke.points.length < 2 || stroke.points.length > 5000) throw Error("Invalid drawing stroke");
+            points += stroke.points.length; if (points > 100000) throw Error("Drawing is too large");
+            return { color:stroke.color.toLowerCase(), size:stroke.size, points:stroke.points.map(point => {
+              if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y) || point.x < 0 || point.x > 1 || point.y < 0 || point.y > 1) throw Error("Invalid drawing point");
+              return {x:point.x,y:point.y};
+            })};
+          });
+        }
+        function validateMarks(marks, length) {
+          if (marks === undefined) return [];
+          if (!Array.isArray(marks) || marks.length > 10000) throw Error("Invalid marking data");
+          let previous = 0;
+          return marks.map(m => {
+            if (!m || !Number.isInteger(m.start) || !Number.isInteger(m.end) || m.start < previous || m.end <= m.start || m.end > length ||
+              (m.highlight !== undefined && !highlightNames.includes(m.highlight)) || (m.color !== undefined && !colorNames.includes(m.color)) ||
+              (m.underline !== undefined && typeof m.underline !== "boolean") || (m.font !== undefined && !Object.hasOwn(fonts,m.font))) throw Error("Invalid mark range");
+            previous = m.end;
+            const v = {start:m.start,end:m.end};
+            if(m.highlight) v.highlight=m.highlight;
+            if(m.color) v.color=m.color;
+            if(m.underline) v.underline=true;
+            if(m.font) v.font=m.font;
+            return v;
+          }).filter(m => m.highlight || m.color || m.underline || m.font);
+        }
+        function sameStyle(a,b) { return a.highlight===b.highlight && a.color===b.color && !!a.underline===!!b.underline && a.font===b.font; }
+        function mergeMarks(list) {
+          const out=[];
+          for (const m of list.sort((a,b)=>a.start-b.start)) {
+            if(m.end<=m.start || (!m.highlight&&!m.color&&!m.underline&&!m.font)) continue;
+            const last=out.at(-1);
+            if(last && last.end===m.start && sameStyle(last,m)) last.end=m.end; else out.push({...m});
+          }
+          return out;
+        }
+        let drawingActive = false, activeStroke = null;
+        function drawingContext() {
+          const canvas=$("drawingCanvas"), rect=canvas.getBoundingClientRect(), ratio=Math.max(1,window.devicePixelRatio||1);
+          const w=Math.max(1,Math.round(rect.width*ratio)), h=Math.max(1,Math.round(rect.height*ratio));
+          if(canvas.width!==w || canvas.height!==h) { canvas.width=w; canvas.height=h; }
+          const ctx=canvas.getContext("2d"); ctx.setTransform(ratio,0,0,ratio,0,0); return {canvas,ctx,rect};
+        }
+        function paintDrawings() {
+          const {ctx,rect}=drawingContext(), strokes=current()?.drawings||[];
+          ctx.clearRect(0,0,rect.width,rect.height);
+          for(const stroke of strokes) {
+            const points=stroke.points; if(points.length<2) continue;
+            ctx.beginPath(); ctx.strokeStyle=stroke.color; ctx.lineWidth=stroke.size; ctx.lineCap="round"; ctx.lineJoin="round";
+            ctx.moveTo(points[0].x*rect.width,points[0].y*rect.height);
+            for(let i=1;i<points.length;i++) ctx.lineTo(points[i].x*rect.width,points[i].y*rect.height);
+            ctx.stroke();
+          }
+          $("undoDrawing").disabled=!strokes.length;
+          $("clearDrawing").disabled=!strokes.length;
+        }
+        function canvasPoint(event) {
+          const rect=$("drawingCanvas").getBoundingClientRect();
+          return {x:Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width)),y:Math.max(0,Math.min(1,(event.clientY-rect.top)/rect.height))};
+        }
+        function setDrawingActive(active) {
+          drawingActive=!!active; activeStroke=null;
+          const writing=document.querySelector(".writing"), button=$("drawToggle");
+          writing.classList.toggle("drawing-active",drawingActive); button.setAttribute("aria-pressed",String(drawingActive));
+          button.textContent=drawingActive?"Writing mode":"Pencil";
+          $("markHelp").textContent=drawingActive?"Pencil is on. Drag across the page to draw. Choose Writing mode to type again.":"Select text to highlight, color or underline. Mark line colors a whole paragraph; place the caret on it first.";
+          if(!drawingActive) editor.focus({preventScroll:true});
+        }
+        function setupDrawing() {
+          const canvas=$("drawingCanvas");
+          $("drawToggle").onclick=()=>setDrawingActive(!drawingActive);
+          $("undoDrawing").onclick=()=>{const p=current(); if(!p.drawings?.length) return; p.drawings.pop(); paintDrawings(); changed(); $("markHelp").textContent="Last pencil stroke undone.";};
+          $("clearDrawing").onclick=()=>{const p=current(); if(!p.drawings?.length) return; ask("Clear drawing?","This removes all pencil strokes from this page. Your typed notes stay unchanged.","Clear drawing",()=>{p.drawings=[]; paintDrawings(); changed(); $("markHelp").textContent="Drawing cleared.";});};
+          canvas.addEventListener("pointerdown",event=>{
+            if(!drawingActive || event.button!==0 || activeStroke) return;
+            const strokes=current().drawings||[], pointCount=strokes.reduce((n,s)=>n+s.points.length,0);
+            if(strokes.length>=2000 || pointCount>99998) { $("markHelp").textContent="Drawing limit reached. Export a backup, then start a new page or remove a stroke."; return; }
+            drawingPointsRemaining=100000-pointCount-2;
+            event.preventDefault(); const point=canvasPoint(event), p=current();
+            const stroke={color:$("drawColor").value.toLowerCase(),size:Number($("drawSize").value),points:[point,{...point}]};
+            (p.drawings??=[]).push(stroke); activeStroke=stroke; canvas.setPointerCapture(event.pointerId); paintDrawings(); changed();
+          });
+          canvas.addEventListener("pointermove",event=>{
+            if(!activeStroke || !drawingActive) return;
+            const point=canvasPoint(event), last=activeStroke.points.at(-1);
+            if(Math.abs(last.x-point.x)+Math.abs(last.y-point.y)>.001) {
+              if(activeStroke.points.length>=5000 || drawingPointsRemaining<=0) { $("markHelp").textContent="Stroke limit reached. Lift the pointer and continue on a new stroke or page."; return; }
+              activeStroke.points.push(point); drawingPointsRemaining--; paintDrawings();
+            }
+          });
+          const finish=event=>{ if(activeStroke) { activeStroke=null; changed(); } if(canvas.hasPointerCapture?.(event.pointerId)) canvas.releasePointerCapture(event.pointerId); };
+          canvas.addEventListener("pointerup",finish); canvas.addEventListener("pointercancel",finish); canvas.addEventListener("lostpointercapture",finish);
+          new ResizeObserver(paintDrawings).observe(canvas);
+        }
+        function textChange(oldText, newText) {
+          if(pendingTextEdit?.oldText===oldText) {
+            let {start,oldEnd,inputType}=pendingTextEdit;
+            const delta=newText.length-oldText.length;
+            if(start===oldEnd && delta<0) {
+              if(inputType.startsWith("delete") && inputType.endsWith("Backward")) start+=delta;
+              else if(inputType.startsWith("delete") && inputType.endsWith("Forward")) oldEnd-=delta;
+            }
+            const newEnd=oldEnd+delta;
+            if(start>=0 && newEnd>=start && oldText.slice(0,start)===newText.slice(0,start) && oldText.slice(oldEnd)===newText.slice(newEnd)) return {start,oldEnd,newEnd};
+          }
+          let start=0; while(start<oldText.length && start<newText.length && oldText[start]===newText[start]) start++;
+          let oldEnd=oldText.length,newEnd=newText.length;
+          while(oldEnd>start && newEnd>start && oldText[oldEnd-1]===newText[newEnd-1]) {oldEnd--;newEnd--;}
+          return {start,oldEnd,newEnd};
+        }
+        function shiftMarks(marks, oldText, newText) {
+          const {start:a,oldEnd,newEnd}=textChange(oldText,newText), delta=newEnd-oldEnd, out=[];
+          for(const m of marks) {
+            if(m.start<a) out.push({...m,end:Math.min(m.end,a)});
+            if(m.end>oldEnd) out.push({...m,start:Math.max(m.start,oldEnd)+delta,end:m.end+delta});
+          }
+          const inherited=marks.find(m=>m.start<a && m.end>oldEnd);
+          if(inherited && newEnd>a) out.push({...inherited,start:a,end:newEnd});
+          return mergeMarks(out);
+        }
+        function colorNewText(marks, oldText, newText, color) {
+          const change=textChange(oldText,newText), shifted=shiftMarks(marks,oldText,newText);
+          if(change.newEnd<=change.start) return shifted;
+          const cuts=new Set([change.start,change.newEnd]);
+          for(const mark of shifted) { cuts.add(mark.start);cuts.add(mark.end); }
+          const points=[...cuts].sort((a,b)=>a-b), out=[];
+          for(let i=0;i<points.length-1;i++) {
+            const start=points[i],end=points[i+1],prior=shifted.find(mark=>mark.start<=start && mark.end>=end),mark={...(prior||{}),start,end};
+            if(start>=change.start && end<=change.newEnd) { if(color) mark.color=color; else delete mark.color; if(state.settings.font!==current().fontBase) mark.font=state.settings.font; else delete mark.font; }
+            out.push(mark);
+          }
+          const merged=mergeMarks(out);
+          if(merged.length>10000) {
+            activeTypingColor=null; updateTypingColorControl(false);
+            notify("Formatting limit reached. Your text is kept, but the new formatting was not applied. Clear some marks or start a new page.");
+            return shifted;
+          }
+          return merged;
+        }
+        function updateTypingColorControl(announce=true) {
+          const button=$("typingColorToggle"), color=$("markColor").value;
+          button.setAttribute("aria-pressed",String(!!activeTypingColor));
+          button.textContent=activeTypingColor?"Stop colored typing":"Type in this color";
+          if(announce) $("markHelp").textContent=activeTypingColor?`New text will be ${activeTypingColor}. Choose Stop colored typing to return to default ink.`:"Select text to highlight, color or underline. Mark line colors a whole paragraph; place the caret on it first.";
+        }
+        function paintNote() {
+          const mirror=$("noteMirrorText"), p=current();
+          if(!mirror || !p) return;
+          const marks=p.marks||[], text=p.content;
+          document.querySelector(".writing").classList.toggle("has-marks",marks.length>0);
+          const frag=document.createDocumentFragment(); let at=0;
+          for(const m of marks) {
+            if(m.start>at) frag.append(document.createTextNode(text.slice(at,m.start)));
+            const span=document.createElement("span");
+            span.textContent=text.slice(m.start,m.end);
+            if(m.highlight) span.dataset.highlight=m.highlight;
+            if(m.color) span.dataset.color=m.color;
+            if(m.font) {span.dataset.font=m.font;span.style.fontFamily=fonts[m.font];}
+            if(m.underline) {span.style.textDecoration="underline";span.style.textUnderlineOffset="3px";}
+            frag.append(span); at=m.end;
+          }
+          frag.append(document.createTextNode(text.slice(at)+"\u200b"));
+          mirror.replaceChildren(frag);
+          if(!composingNote) {
+            const focused=document.activeElement===editor, savedRange=noteRange(), top=editor.scrollTop, left=editor.scrollLeft;
+            const rich=mirror.cloneNode(true); rich.removeAttribute("id");
+            const last=rich.lastChild; if(last?.nodeType===3) last.textContent=last.textContent.slice(0,-1);
+            if(p.content.endsWith("\n")) { const tail=document.createElement("br");tail.dataset.tail="true";rich.append(tail); }
+            if(editor.innerHTML!==rich.innerHTML) {editor.replaceChildren(...rich.childNodes); if(focused) editor.setSelectionRange(savedRange.start,savedRange.end);}
+            editor.scrollTop=top; editor.scrollLeft=left;
+          }
+          const cs=getComputedStyle(editor);
+          for(const k of ["fontFamily","fontSize","fontWeight","lineHeight","letterSpacing","paddingTop","paddingRight","paddingBottom","paddingLeft","tabSize","direction"]) mirror.style[k]=cs[k];
+          mirror.style.width=editor.clientWidth+"px";
+          mirror.style.transform=`translate(${-editor.scrollLeft}px, ${-editor.scrollTop}px)`;
+          $("undoMark").disabled=!markUndo.length;
+        }
+        function rememberSelection() {
+          if(document.activeElement===editor) {
+            selection={start:editor.selectionStart,end:editor.selectionEnd,id:current().id};
+            let displayFont=state.settings.font;
+            if(selection.end>selection.start) {
+              const names=new Set();let at=selection.start;
+              for(const m of current().marks||[]) {
+                if(m.end<=selection.start || m.start>=selection.end) continue;
+                if(m.start>at) names.add(current().fontBase);
+                names.add(m.font||current().fontBase);at=Math.max(at,Math.min(m.end,selection.end));
+              }
+              if(at<selection.end) names.add(current().fontBase);
+              displayFont=names.size===1?[...names][0]:"";
+            }
+            $("noteFont").value=displayFont;$("font").value=displayFont;
+          }
+        }
+        function markRange(kind, value) {
+          sync(); const p=current();
+          let a=selection.id===p.id?selection.start:editor.selectionStart, b=selection.id===p.id?selection.end:editor.selectionEnd;
+          a=Math.min(a,p.content.length); b=Math.min(b,p.content.length);
+          if(kind==="line") {
+            a=a===0?0:p.content.lastIndexOf("\n",a-1)+1;
+            const last=b>a?b-1:b, end=p.content.indexOf("\n",last);
+            b=end<0?p.content.length:end;
+            kind="highlight";
+          }
+          if(a===b) {$("markHelp").textContent="Select some text first, or place the caret on a nonempty line and choose Mark line.";return;}
+          const before=structuredClone(p.marks||[]), cuts=new Set([a,b]);
+          for(const m of before) {cuts.add(m.start);cuts.add(m.end);}
+          const points=[...cuts].sort((x,y)=>x-y), out=[];
+          for(let i=0;i<points.length-1;i++) {
+            const start=points[i],end=points[i+1];
+            const prior=before.find(m=>m.start<=start && m.end>=end);
+            const m={...(prior||{}),start,end};
+            if(start>=a && end<=b) {
+              if(kind==="clear") {delete m.highlight;delete m.color;delete m.underline;delete m.font;}
+              else if(value===null) delete m[kind]; else m[kind]=value;
+            }
+            out.push(m);
+          }
+          const next=mergeMarks(out);
+          if(next.length>10000) {$("markHelp").textContent="Too many separate marks. Clear some marks before adding more.";return;}
+          markUndo.push({id:p.id,content:p.content,marks:before}); if(markUndo.length>20) markUndo.shift();
+          p.marks=next;
+          paintNote(); changed();
+          $("markHelp").textContent=kind==="clear"?"Marks cleared from the selection.":"Mark applied. Select another passage, or choose Undo mark.";
+          editor.focus({preventScroll:true}); editor.setSelectionRange(a,b); rememberSelection();
+        }
+        function styledExport() {
+          sync(); flush();
+          const escape = t=>t.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+          const h={yellow:'#f6e7a7',green:'#cfe5ce',blue:'#cfe4f5',pink:'#f0d5df'}, c={blue:'#17548b',red:'#a52b2b',green:'#246044',purple:'#704198'};
+          const pages=state.pages.map(p=>{
+            let text='',at=0;
+            for(const m of p.marks||[]) {
+              text+=escape(p.content.slice(at,m.start));
+              const style=(m.highlight?`background:${h[m.highlight]};color:#302b1b;`:'')+(m.color?`color:${c[m.color]};`:'')+(m.underline?'text-decoration:underline;':'')+(m.font?`font-family:${escape(fonts[m.font])};`:'');
+              text+=`<span style="${style}">${escape(p.content.slice(m.start,m.end))}</span>`;at=m.end;
+            }
+            text+=escape(p.content.slice(at));
+            const drawing=(p.drawings||[]).length ? `<svg class="drawing" viewBox="0 0 720 440" role="img" aria-label="Page drawing">${p.drawings.map(stroke=>`<path d="M ${stroke.points.map(point=>`${(point.x*720).toFixed(2)} ${(point.y*440).toFixed(2)}`).join(' L ')}" fill="none" stroke="${stroke.color}" stroke-width="${stroke.size}" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}</svg>` : '';
+            return `<article data-template="${validTemplate(p.template)}" style="--pitch:${p.template==="wide"?44:36}px;--page-font:${escape(fonts[p.fontBase])}"><h1>${escape(p.title||'Untitled page')}</h1><p class="date">${escape(p.date)}</p><div class="text">${text}</div>${drawing}</article>`;
+          }).join('');
+          download(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Notebook export</title><style>body{max-width:760px;margin:40px auto;padding:0 24px;color:#2c2c2b;background:#fff}article{margin-bottom:48px;break-after:page}h1{font:28px Georgia,serif}.date{font:13px Arial;color:#666}.text{white-space:pre-wrap;overflow-wrap:break-word;font-family:var(--page-font);font-size:19px;line-height:var(--pitch);padding:5px 16px 24px;min-height:180px;background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(var(--pitch) - 1px),#dce5eb calc(var(--pitch) - 1px),#dce5eb var(--pitch))}article[data-template="blank"] .text{background-image:none}article[data-template="grid"] .text{background-image:linear-gradient(#dce5eb 1px,transparent 1px),linear-gradient(90deg,#dce5eb 1px,transparent 1px);background-size:18px 18px}article[data-template="dotted"] .text{background-image:radial-gradient(circle,#dce5eb 1px,transparent 1.5px);background-size:18px 18px}.drawing{display:block;width:100%;height:auto;margin-top:20px;border:1px solid #e6e5e3}@media print{body{margin:0}}</style>${pages}</html>`,"text/html;charset=utf-8","notebook-styled.html");
+        }
+        function setupMarkTools() {
+          setupRichEditor();
+          $("font").insertAdjacentHTML("afterbegin",'<option value="" disabled>Mixed fonts</option>');
+          $("noteFont").innerHTML=$("font").innerHTML;
+          for(const select of [$("noteFont"),$("font")]) for(const option of select.options) if(fonts[option.value]) option.style.fontFamily=fonts[option.value];
+          $("noteFont").onchange=()=>chooseNoteFont($("noteFont").value);
+          $("pageTemplate").onchange=()=>{
+            sync(); const p=current();p.template=validTemplate($("pageTemplate").value);
+            const w=document.querySelector(".writing");w.dataset.template=p.template;w.style.setProperty("--pitch",p.template==="wide"?"44px":"36px");paintNote();changed();
+          };
+          $("markToolsToggle").onclick=()=>{const b=$("markToolsToggle");$("markTools").hidden=!$("markTools").hidden;b.setAttribute("aria-expanded",String(!$("markTools").hidden));if($("markTools").hidden && drawingActive) setDrawingActive(false);};
+          $("highlightSelection").onclick=()=>markRange("highlight",$("markHighlight").value);
+          $("highlightLine").onclick=()=>markRange("line",$("markHighlight").value);
+          $("colorSelection").onclick=()=>markRange("color",$("markColor").value==="ink"?null:$("markColor").value);
+          $("typingColorToggle").onclick=()=>{
+            const color=$("markColor").value;
+            activeTypingColor=activeTypingColor?null:(color==="ink"?null:color);
+            if(drawingActive) setDrawingActive(false);
+            updateTypingColorControl(); editor.focus({preventScroll:true});
+          };
+          $("markColor").onchange=()=>{ if(activeTypingColor) { activeTypingColor=$("markColor").value==="ink"?null:$("markColor").value; updateTypingColorControl(); } };
+          $("underlineSelection").onclick=()=>markRange("underline",true);
+          $("clearSelection").onclick=()=>markRange("clear");
+          $("undoMark").onclick=()=>{const prev=markUndo.pop();if(prev && prev.id===current().id && prev.content===editor.value) {current().marks=prev.marks;paintNote();changed();$("markHelp").textContent="Last mark undone.";}};
+          $("addBlankPage").onclick=()=>add("blank");
+          $("exportStyled").onclick=styledExport;
+          for(const e of ["select","keyup","pointerup"]) editor.addEventListener(e,rememberSelection);
+          document.addEventListener("selectionchange",rememberSelection);
+          editor.addEventListener("scroll",paintNote);
+          new ResizeObserver(paintNote).observe(editor);
+          setupDrawing();
+        }
+
+        function validate(data, legacy = false) {
+          if (
+            !data ||
+            typeof data !== "object" ||
+            !Array.isArray(data.pages) ||
+            !data.pages.length ||
+            data.pages.length > 10000
+          )
+            throw Error("Invalid pages");
+          if (!legacy && data.version !== 1) throw Error("Unsupported backup version");
+          const ids = new Set();
+          const pages = data.pages.map((p) => {
+            if (
+              !p ||
+              typeof p !== "object" ||
+              typeof p.title !== "string" ||
+              typeof p.content !== "string" ||
+              typeof p.date !== "string"
+            )
+              throw Error("Invalid page");
+            let id = legacy ? makeId() : p.id;
+            if (typeof id !== "string" || !id || ids.has(id)) throw Error("Invalid page ID");
+            ids.add(id);
+            return { id, title: p.title, date: p.date, content: p.content,
+              template: validTemplate(p.template), fontBase:p.fontBase, marks: validateMarks(p.marks, p.content.length), drawings: validateDrawings(p.drawings) };
+          });
+          const s = legacy
+            ? {
+                theme:
+                  {
+                    "theme-classic": "white",
+                    "theme-cream": "cream",
+                    "theme-yellow": "cream",
+                    "theme-grid": "white",
+                    "theme-dark": "dark",
+                  }[data.activeTheme] || "auto",
+                font: data.activeFont === "sans" ? "sans" : "serif",
+                sound: false,
+                practice: false,
+              }
+            : data.settings;
+          if (
+            !s ||
+            !["auto", "cream", "white", "dark"].includes(s.theme) ||
+            !Object.hasOwn(fonts, s.font) ||
+            typeof s.sound !== "boolean" ||
+            typeof s.practice !== "boolean"
+          )
+            throw Error("Invalid settings");
+          for(const p of pages) {
+            if(p.fontBase===undefined) p.fontBase=s.font;
+            if(!Object.hasOwn(fonts,p.fontBase)) throw Error("Invalid page font");
+          }
+
+          const index =
+            Number.isInteger(data.currentPageIndex) &&
+            data.currentPageIndex >= 0 &&
+            data.currentPageIndex < pages.length
+              ? data.currentPageIndex
+              : 0;
+          return {
+            version: 1,
+            currentPageId: legacy
+              ? pages[index].id
+              : ids.has(data.currentPageId)
+                ? data.currentPageId
+                : pages[0].id,
+            settings: { theme: s.theme, font: s.font, sound: s.sound, practice: s.practice },
+            pages,
+          };
+        }
+        function current() {
+          return state.pages.find((p) => p.id === state.currentPageId);
+        }
+        function status(text, error = false) {
+          $("saveStatus").textContent = text;
+          $("saveStatus").classList.toggle("error", error);
+        }
+        function notify(text, label, handler) {
+          $("noticeText").textContent = text;
+          noticeHandler = handler || null;
+          $("noticeAction").hidden = !label;
+          $("noticeAction").textContent = label || "";
+          $("notice").classList.add("visible");
+        }
+        function sync(inputType="") {
+          const p = current();
+          if(textHistoryIndex<0 || textHistory[textHistoryIndex]?.content!==p.content) {
+            textHistory=[{content:p.content,marks:structuredClone(p.marks||[])}]; textHistoryIndex=0;
+          } else textHistory[textHistoryIndex].marks=structuredClone(p.marks||[]);
+          p.title = $("pageTitle").value;
+          if (p.content !== editor.value || (String(inputType).startsWith("insert") && pendingTextEdit?.oldEnd>pendingTextEdit?.start)) {
+            let restored=-1;
+            if(inputType==="historyUndo") for(let i=textHistoryIndex-1;i>=0;i--) { if(textHistory[i].content===editor.value) {restored=i;break;} }
+            if(inputType==="historyRedo") for(let i=textHistoryIndex+1;i<textHistory.length;i++) { if(textHistory[i].content===editor.value) {restored=i;break;} }
+            if(restored>=0) { p.marks=structuredClone(textHistory[restored].marks); textHistoryIndex=restored; }
+            else {
+              p.marks = colorNewText(p.marks || [], p.content, editor.value, activeTypingColor);
+              textHistory.splice(textHistoryIndex+1);
+              textHistory.push({content:editor.value,marks:structuredClone(p.marks)}); textHistoryIndex=textHistory.length-1;
+              let total=textHistory.reduce((n,x)=>n+x.content.length,0);
+              while(textHistory.length>1 && (textHistory.length>100 || total>2000000)) {total-=textHistory.shift().content.length;textHistoryIndex--;}
+            }
+            p.content = editor.value;
+            markUndo = [];
+          }
+          pendingTextEdit=null;
+          paintNote();
+        }
+        function persist() {
+          clearTimeout(saveTimer);
+          saveTimer = null;
+          if (blocked) {
+            status("Not saved · backup recommended", true);
+            return false;
+          }
+          try {
+            const actual = localStorage.getItem(KEY);
+            if (actual !== lastRaw) {
+              blocked = true;
+              status("Another tab changed your notes", true);
+              notify(
+                "Another tab changed this notebook. Download a backup of your work before loading the other version.",
+                "Load other version",
+                reloadOther,
+              );
+              return false;
+            }
+            const raw = JSON.stringify(state);
+            localStorage.setItem(KEY, raw);
+            lastRaw = raw;
+            dirty = false;
+            status("Saved on this device");
+            return true;
+          } catch (e) {
+            status("Save failed · download a backup", true);
+            return false;
+          }
+        }
+        function changed() {
+          dirty = true;
+          status("Saving…");
+          clearTimeout(saveTimer);
+          saveTimer = setTimeout(persist, 300);
+        }
+        function flush() {
+          if (dirty) persist();
+        }
+        function updateCounts() {
+          const text = editor.value;
+          const words = (text.trim().match(/\S+/gu) || []).length;
+          let chars;
+          if (globalThis.Intl?.Segmenter) {
+            chars = Array.from(
+              new Intl.Segmenter(undefined, { granularity: "grapheme" }).segment(text),
+            ).length;
+          } else chars = Array.from(text).length;
+          $("counts").textContent =
+            `${words} ${words === 1 ? "word" : "words"} · ${chars} ${chars === 1 ? "character" : "characters"}`;
+        }
+        function renderList() {
+          const frag = document.createDocumentFragment();
+          state.pages.forEach((p, i) => {
+            const li = document.createElement("li"),
+              b = document.createElement("button"),
+              num = document.createElement("span"),
+              title = document.createElement("span");
+            num.className = "page-number";
+            num.textContent = String(i + 1).padStart(2, "0");
+            title.className = "page-name";
+            title.textContent = p.title || "Untitled page";
+            b.append(num, title);
+            if (p.id === state.currentPageId) b.setAttribute("aria-current", "page");
+            b.addEventListener("click", () => navigate(p.id));
+            li.append(b);
+            frag.append(li);
+          });
+          $("pageList").replaceChildren(frag);
+          $("totalPages").textContent =
+            `${state.pages.length} ${state.pages.length === 1 ? "page" : "pages"}`;
+        }
+        function applySettings() {
+          const s = state.settings;
+          document.documentElement.dataset.theme = s.theme;
+          document.documentElement.style.setProperty("--writing-font", fonts[current().fontBase||"serif"]);
+          $("theme").value = s.theme;
+          $("font").value = s.font;
+          $("noteFont").value = s.font;
+          paintNote();
+          $("sound").checked = s.sound;
+          $("practice").checked = s.practice;
+        }
+        function render() {
+          const p = current(),
+            idx = state.pages.indexOf(p);
+          $("pageTitle").value = p.title;
+          editor.value = p.content;
+          $("pageLabel").textContent = `Page ${String(idx + 1).padStart(2, "0")}`;
+          const d = new Date(p.date);
+          $("pageDate").textContent = Number.isNaN(d.getTime())
+            ? p.date
+            : d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+          if (!Number.isNaN(d.getTime())) $("pageDate").dateTime = d.toISOString();
+          else $("pageDate").removeAttribute("datetime");
+          $("position").textContent = `${idx + 1} / ${state.pages.length}`;
+          $("prev").disabled = idx === 0;
+          $("deletePage").disabled = state.pages.length === 1;
+          $("next").setAttribute(
+            "aria-label",
+            idx === state.pages.length - 1 ? "Add a new page" : "Next page",
+          );
+          editor.scrollTop = 0;
+          selection = { start: 0, end: 0, id: p.id };
+          markUndo = [];
+          pendingTextEdit=null; textHistory=[]; textHistoryIndex=-1;
+          setDrawingActive(false);
+          $("pageTemplate").value = p.template || "ruled";
+          document.querySelector(".writing").dataset.template = p.template || "ruled";
+          document.querySelector(".writing").style.setProperty("--pitch", p.template === "wide" ? "44px" : "36px");
+          updateTypingColorControl(false);
+          $("markHelp").textContent = activeTypingColor ? `New text will be ${activeTypingColor}. Choose Stop colored typing to return to default ink.` : "Select text to highlight, color or underline. Mark line colors a whole paragraph; place the caret on it first.";
+          updateCounts();
+          renderList();
+          applySettings();
+          paintDrawings();
+        }
+        function closeMobilePages() {
+          $("sidebar").classList.remove("open");
+          $("pagesToggle").setAttribute("aria-expanded", "false");
+        }
+        function playSound() {
+          if (!state.settings.sound) return;
+          try {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return;
+            audio ??= new AC();
+            const sound = () => {
+              const n = audio.createBufferSource(),
+                buffer = audio.createBuffer(
+                  1,
+                  Math.floor(audio.sampleRate * 0.12),
+                  audio.sampleRate,
+                ),
+                channel = buffer.getChannelData(0);
+              for (let i = 0; i < channel.length; i++)
+                channel[i] = (Math.random() * 2 - 1) * Math.exp(-i / (channel.length * 0.2));
+              n.buffer = buffer;
+              const g = audio.createGain();
+              g.gain.value = 0.035;
+              n.connect(g);
+              g.connect(audio.destination);
+              n.onended = () => {
+                n.disconnect();
+                g.disconnect();
+              };
+              n.start();
+            };
+            if (audio.state === "suspended")
+              audio
+                .resume()
+                .then(sound)
+                .catch(() => {});
+            else sound();
+          } catch (e) {
+            /* Audio is optional. */
+          }
+        }
+        function navigate(id) {
+          sync();
+          state.currentPageId = id;
+          dirty = true;
+          render();
+          persist();
+          playSound();
+          closeMobilePages();
+          editor.focus();
+        }
+        function add(template = "ruled") {
+          sync();
+          const p = newPage();
+          p.fontBase=state.settings.font;
+          p.template = typeof template === "string" ? validTemplate(template) : "ruled";
+          state.pages.push(p);
+          state.currentPageId = p.id;
+          dirty = true;
+          render();
+          persist();
+          playSound();
+          closeMobilePages();
+          $("pageTitle").focus();
+        }
+        function ask(title, text, accept, fn) {
+          $("confirmTitle").textContent = title;
+          $("confirmText").textContent = text;
+          $("acceptConfirm").textContent = accept;
+          confirmHandler = fn;
+          $("confirmation").showModal();
+          $("cancelConfirm").focus();
+        }
+        function remove() {
+          if (state.pages.length === 1) return;
+          ask(
+            "Delete this page?",
+            "Undo is available in the notification during this session. Download a backup first if you want a permanent copy.",
+            "Delete page",
+            () => {
+              sync();
+              const index = state.pages.findIndex((p) => p.id === state.currentPageId);
+              undo = { page: state.pages[index], index };
+              state.pages.splice(index, 1);
+              state.currentPageId = state.pages[Math.min(index, state.pages.length - 1)].id;
+              dirty = true;
+              render();
+              persist();
+              notify("Page deleted.", "Undo", () => {
+                if (!undo) return;
+                sync();
+                state.pages.splice(undo.index, 0, undo.page);
+                state.currentPageId = undo.page.id;
+                undo = null;
+                dirty = true;
+                render();
+                persist();
+                $("notice").classList.remove("visible");
+                editor.focus();
+              });
+              editor.focus();
+            },
+          );
+        }
+        function download(content, type, name) {
+          const url = URL.createObjectURL(new Blob([content], { type })),
+            a = document.createElement("a");
+          a.href = url;
+          a.download = name;
+          document.body.append(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+        function exportText() {
+          sync();
+          flush();
+          const text = state.pages
+            .map(
+              (p, i) => `PAGE ${i + 1}: ${p.title || "Untitled page"}\n${p.date}\n\n${p.content}`,
+            )
+            .join("\n\n────────────────────────\n\n");
+          download(text, "text/plain;charset=utf-8", "notebook.txt");
+        }
+        function backup() {
+          sync();
+          flush();
+          download(JSON.stringify(state, null, 2), "application/json", "notebook-backup.json");
+          $("backupMessage").textContent =
+            "Backup download requested. Keep the file somewhere safe.";
+        }
+        async function importBackup(file) {
+          if (!file) return;
+          try {
+            if (file.size > 20 * 1024 * 1024) throw Error("File too large");
+            const raw = JSON.parse(await file.text());
+            const imported = validate(
+              raw,
+              raw.version === undefined && Object.hasOwn(raw, "currentPageIndex"),
+            );
+            ask(
+              "Restore this backup?",
+              `This replaces the current notebook with ${imported.pages.length} pages. Download a backup of your current notes first.`,
+              "Restore",
+              () => {
+                try {
+                  const actual = localStorage.getItem(KEY);
+                  if (actual !== lastRaw) throw Error("Notebook changed in another tab");
+                  const serialized = JSON.stringify(imported);
+                  localStorage.setItem(KEY, serialized);
+                  state = imported;
+                  lastRaw = serialized;
+                  blocked = false;
+                  dirty = false;
+                  undo = null;
+                  clearTimeout(saveTimer);
+                  render();
+                  status("Saved on this device");
+                  $("notice").classList.remove("visible");
+                  $("backupMessage").textContent = "Backup restored.";
+                } catch (e) {
+                  $("backupMessage").textContent =
+                    "Restore failed. Existing notes have not been replaced. Download a backup and resolve the storage issue first.";
+                }
+              },
+            );
+          } catch (e) {
+            $("backupMessage").textContent =
+              "Could not read this backup. Use a valid notebook JSON file (up to 20 MB).";
+          } finally {
+            $("importFile").value = "";
+          }
+        }
+        function reloadOther() {
+          try {
+            const raw = localStorage.getItem(KEY);
+            if (!raw) throw Error("No stored notebook");
+            const next = validate(JSON.parse(raw));
+            state = next;
+            lastRaw = raw;
+            blocked = false;
+            dirty = false;
+            undo = null;
+            clearTimeout(saveTimer);
+            render();
+            status("Saved on this device");
+            $("notice").classList.remove("visible");
+          } catch (e) {
+            notify(
+              "The other version could not be loaded. Your current notes are still available; export a backup.",
+            );
+          }
+        }
+        function load() {
+          try {
+            lastRaw = localStorage.getItem(KEY);
+            if (lastRaw) {
+              state = validate(JSON.parse(lastRaw));
+              status("Saved on this device");
+            } else {
+              const legacy = localStorage.getItem(LEGACY);
+              if (legacy) {
+                state = validate(JSON.parse(legacy), true);
+                dirty = true;
+                render();
+                persist();
+                notify(
+                  "Your previous notebook was imported. The original stored data was kept unchanged.",
+                );
+              } else status("Ready · stored after your first edit");
+            }
+          } catch (e) {
+            blocked = true;
+            status("Storage unavailable or invalid", true);
+            notify(
+              "Existing storage could not be read. It will not be overwritten. You can write and download a backup.",
+            );
+          }
+          render();
+        }
+        editor.addEventListener("input", (event) => {
+          sync(event.inputType);
+          updateCounts();
+          changed();
+        });
+        $("pageTitle").addEventListener("input", () => {
+          sync();
+          renderList();
+          changed();
+        });
+        for (const type of ["copy", "cut", "paste", "drop"])
+          editor.addEventListener(type, (e) => {
+            if (state.settings.practice) {
+              e.preventDefault();
+              notify(
+                "Typing practice is on. Turn it off in Settings to use copy, cut, paste or drop.",
+              );
+            }
+          });
+        editor.addEventListener("beforeinput", (e) => {
+          if(e.defaultPrevented) {pendingTextEdit=null;return;}
+          pendingTextEdit={oldText:editor.value,start:editor.selectionStart,oldEnd:editor.selectionEnd,inputType:e.inputType||""};
+          if (
+            state.settings.practice &&
+            ["insertFromPaste", "insertFromDrop", "deleteByCut"].includes(e.inputType)
+          ) { e.preventDefault(); pendingTextEdit=null; }
+        });
+        $("addPage").onclick = add;
+        $("prev").onclick = () => {
+          const i = state.pages.findIndex((p) => p.id === state.currentPageId);
+          if (i > 0) navigate(state.pages[i - 1].id);
+        };
+        $("next").onclick = () => {
+          const i = state.pages.findIndex((p) => p.id === state.currentPageId);
+          if (i === state.pages.length - 1) add();
+          else navigate(state.pages[i + 1].id);
+        };
+        $("deletePage").onclick = remove;
+        $("pagesToggle").onclick = () => {
+          $("pagesToggle").setAttribute(
+            "aria-expanded",
+            String($("sidebar").classList.toggle("open")),
+          );
+        };
+        $("exportTxt").onclick = exportText;
+        $("settingsBtn").onclick = () => {
+          $("settings").showModal();
+        };
+        $("closeSettings").onclick = () => {
+          $("settings").close();
+        };
+        $("font").addEventListener("change",()=>chooseNoteFont($("font").value));
+        for (const id of ["theme", "sound", "practice"])
+          $(id).addEventListener("change", () => {
+            sync();
+            state.settings[id] = ["sound", "practice"].includes(id) ? $(id).checked : $(id).value;
+            applySettings();
+            dirty = true;
+            persist();
+          });
+        $("backup").onclick = backup;
+        $("importBtn").onclick = () => {
+          $("importFile").click();
+        };
+        $("importFile").onchange = () => importBackup($("importFile").files[0]);
+        $("noticeClose").onclick = () => {
+          $("notice").classList.remove("visible");
+        };
+        $("noticeAction").onclick = () => noticeHandler?.();
+        $("cancelConfirm").onclick = () => {
+          $("confirmation").close();
+          confirmHandler = null;
+        };
+        $("acceptConfirm").onclick = () => {
+          const fn = confirmHandler;
+          confirmHandler = null;
+          $("confirmation").close();
+          fn?.();
+        };
+        $("confirmation").addEventListener("cancel", () => {
+          confirmHandler = null;
+        });
+        document.addEventListener("keydown", (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+            e.preventDefault();
+            sync();
+            dirty = true;
+            persist();
+          }
+        });
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden) flush();
+        });
+        window.addEventListener("pagehide", flush);
+        window.addEventListener("beforeunload", (e) => {
+          if (dirty) {
+            flush();
+            if (dirty) {
+              e.preventDefault();
+              e.returnValue = "";
+            }
+          }
+        });
+        window.addEventListener("storage", (e) => {
+          if (e.key !== KEY && e.key !== null) return;
+          if (e.newValue === lastRaw && e.key === KEY) return;
+          blocked = true;
+          clearTimeout(saveTimer);
+          status("Another tab changed your notes", true);
+          notify(
+            "Another tab changed this notebook. Download a backup before loading the other version.",
+            "Load other version",
+            reloadOther,
+          );
+        });
+        let elapsed = 0,
+          startedAt = null,
+          timerInterval = null;
+        function timerRender() {
+          const ms = elapsed + (startedAt === null ? 0 : Math.max(0, Date.now() - startedAt)),
+            seconds = Math.floor(ms / 1000);
+          $("timerDisplay").textContent =
+            `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+        }
+        $("timerBtn").onclick = () => {
+          if (startedAt !== null) {
+            elapsed += Math.max(0, Date.now() - startedAt);
+            startedAt = null;
+            clearInterval(timerInterval);
+            $("timerBtn").textContent = "Start";
+          } else {
+            startedAt = Date.now();
+            timerInterval = setInterval(timerRender, 200);
+            $("timerBtn").textContent = "Pause";
+          }
+          timerRender();
+        };
+        $("resetTimer").onclick = () => {
+          elapsed = 0;
+          startedAt = null;
+          clearInterval(timerInterval);
+          $("timerBtn").textContent = "Start";
+          timerRender();
+        };
+        const narrow = matchMedia("(max-width:900px)");
+        function placeTimer() {
+          if (narrow.matches) $("mobileTimerSlot").append($("timerControls"));
+          else document.querySelector(".top-actions").prepend($("timerControls"));
+        }
+        narrow.addEventListener("change", placeTimer);
+        placeTimer();
+        setupMarkTools();
+        load();
+        // Untimed, finite English passages; notebook data and old timed results stay untouched.
+        const PRACTICE_KEY = "QUIET_TYPING_PRACTICE_V2";
+        const defaultPractice = () => ({
+          level: "normal",
+          kind: "words",
+          display: "passage",
+          highlight: "character",
+          size: "regular",
+          punctuation: false,
+          numbers: false,
+          showWpm: true,
+          showElapsed: false,
+          keyboard: true,
+          guide: false,
+          smooth: true,
+        });
+        let options = defaultPractice(),
+          practiceHistory = [],
+          practiceStorageInvalid = false,
+          practicePhase = "ready",
+          practiceStart = 0,
+          practiceElapsed = 0,
+          practiceTicker = null,
+          practiceBuffer = "",
+          practiceAttempts = 0,
+          practiceTarget = "",
+          referenceWords = [],
+          lastSample = "",
+          practiceInterrupted = false,
+          practiceNodes = [],
+          caretFrame = null;
+        const input = $("testInput"),
+          surface = $("typingSurface"),
+          passage = $("testPassage");
+        const wordsByLevel = {
+          normal:
+            "the and you your we day home book room time hand look write read small light good open calm walk water green quiet clear work place page idea learn right next move keep think life friend".split(
+              " ",
+            ),
+          medium:
+            "morning simple garden travel steady window between notice careful change example listen practice improve patient remember create enough follow reason answer complete better curious honest gentle useful progress develop effort".split(
+              " ",
+            ),
+          hard: "accuracy deliberate resilient perspective intricate articulate sustainable equilibrium meticulous architecture comprehension versatile discipline extraordinary consistency thoughtful hypothesis collaboration distinguish responsibility perseverance efficient interpretation circumstance evaluate demonstrate independent vocabulary technique".split(
+            " ",
+          ),
+        };
+        const sentenceBank = {
+          normal: [
+            "A quiet room helps you focus on one small task at a time.",
+            "Write a short note and keep your hands relaxed as you type.",
+            "The morning light falls across a book on the wooden desk.",
+          ],
+          medium: [
+            "A steady rhythm is more useful than a hurried start. Read each word carefully and leave enough room to correct mistakes.",
+            "Learning takes patience and regular effort. Small improvements become easier to notice when you practice a little every day.",
+            "The garden looked different after the rain. She opened the window and listened to the birds before starting her work.",
+          ],
+          hard: [
+            "Precision develops through deliberate practice, not frantic repetition. Observe difficult patterns, adjust your technique, and maintain a consistent rhythm. Thoughtful corrections build confidence without sacrificing clarity or concentration.",
+            "The architect reconsidered several intricate details before approving the design. Sustainable materials required careful evaluation, while unexpected circumstances encouraged collaboration. Every decision balanced efficiency, responsibility, and the character of the finished building.",
+            "Clear communication requires more than an extensive vocabulary. Consider the reader, distinguish evidence from assumptions, and organize complex ideas with care. An articulate explanation makes unfamiliar concepts accessible without oversimplifying their meaning.",
+          ],
+        };
+        function randomPick(max) {
+          if (globalThis.crypto?.getRandomValues) {
+            const a = new Uint32Array(1);
+            crypto.getRandomValues(a);
+            return a[0] % max;
+          }
+          return Math.floor(Math.random() * max);
+        }
+        function createSample() {
+          let text;
+          if (options.kind === "words") {
+            const count = { normal: 12, medium: 20, hard: 30 }[options.level],
+              pool = wordsByLevel[options.level];
+            let previous = "";
+            text = Array.from({ length: count }, () => {
+              let w = pool[randomPick(pool.length)];
+              if (w === previous) w = pool[(pool.indexOf(w) + 1) % pool.length];
+              previous = w;
+              return w;
+            }).join(" ");
+            if (options.punctuation)
+              text = text
+                .split(" ")
+                .map((w, i) => (i === count - 1 ? w + "." : (i + 1) % 5 === 0 ? w + "," : w))
+                .join(" ");
+          } else {
+            const pool = sentenceBank[options.level];
+            let n = randomPick(pool.length);
+            if (pool[n] === lastSample) n = (n + 1) % pool.length;
+            text = pool[n];
+            if (!options.punctuation) text = text.replace(/[.,;:!?]/g, "");
+          }
+          if (options.numbers) {
+            const list = text.split(" ");
+            list[Math.floor(list.length / 2)] = String(10 + randomPick(90));
+            text = list.join(" ");
+          }
+          lastSample = text;
+          return text;
+        }
+        function validateOptions(o) {
+          const v = defaultPractice();
+          if (!o || typeof o !== "object") throw Error("Invalid options");
+          for (const key of ["level", "kind", "display", "highlight", "size"]) {
+            const allowed = {
+              level: ["normal", "medium", "hard"],
+              kind: ["words", "sentences"],
+              display: ["passage", "tape"],
+              highlight: ["character", "word", "caret"],
+              size: ["small", "regular", "large"],
+            }[key];
+            if (!allowed.includes(o[key])) throw Error("Invalid option");
+            v[key] = o[key];
+          }
+          for (const key of [
+            "punctuation",
+            "numbers",
+            "showWpm",
+            "showElapsed",
+            "keyboard",
+            "guide",
+            "smooth",
+          ]) {
+            if (typeof o[key] !== "boolean") throw Error("Invalid option");
+            v[key] = o[key];
+          }
+          return v;
+        }
+        function validatePractice(raw) {
+          const x = JSON.parse(raw);
+          if (!x || x.version !== 2 || !Array.isArray(x.results))
+            throw Error("Invalid practice data");
+          const prefs = validateOptions(x.options);
+          const rows = x.results
+            .filter(
+              (r) =>
+                r &&
+                typeof r.id === "string" &&
+                typeof r.date === "string" &&
+                Number.isFinite(Date.parse(r.date)) &&
+                ["normal", "medium", "hard"].includes(r.level) &&
+                ["words", "sentences"].includes(r.kind) &&
+                typeof r.punctuation === "boolean" &&
+                typeof r.numbers === "boolean" &&
+                typeof r.complete === "boolean" &&
+                typeof r.interrupted === "boolean" &&
+                Number.isFinite(r.wpm) &&
+                r.wpm >= 0 &&
+                Number.isFinite(r.raw) &&
+                r.raw >= 0 &&
+                Number.isFinite(r.accuracy) &&
+                r.accuracy >= 0 &&
+                r.accuracy <= 100 &&
+                Number.isFinite(r.progress) &&
+                r.progress >= 0 &&
+                r.progress <= 100 &&
+                Number.isFinite(r.elapsed) &&
+                r.elapsed >= 0,
+            )
+            .slice(0, 20);
+          return { options: prefs, results: rows };
+        }
+        function readPractice() {
+          try {
+            const raw = localStorage.getItem(PRACTICE_KEY);
+            if (raw) {
+              const data = validatePractice(raw);
+              options = data.options;
+              practiceHistory = data.results;
+            } else {
+              options = defaultPractice();
+              practiceHistory = [];
+            }
+            practiceStorageInvalid = false;
+          } catch (e) {
+            practiceStorageInvalid = true;
+            options = defaultPractice();
+            practiceHistory = [];
+            $("practiceOptionsNotice").textContent =
+              "Practice storage could not be read. Existing data will not be overwritten.";
+          }
+          renderPracticeHistory();
+        }
+        function storePractice() {
+          try {
+            if (practiceStorageInvalid) throw Error("Unreadable storage");
+            localStorage.setItem(
+              PRACTICE_KEY,
+              JSON.stringify({ version: 2, options, results: practiceHistory }),
+            );
+            $("practiceOptionsNotice").textContent = "";
+            return true;
+          } catch (e) {
+            $("practiceOptionsNotice").textContent =
+              "Options/results could not be saved. They remain available for this session.";
+            return false;
+          }
+        }
+        function renderPracticeHistory() {
+          const fragment = document.createDocumentFragment();
+          for (const r of practiceHistory.slice(0, 5)) {
+            const li = document.createElement("li"),
+              label = document.createElement("span"),
+              score = document.createElement("span");
+            label.className = "muted";
+            label.textContent = `${r.level[0].toUpperCase() + r.level.slice(1)} · ${r.kind === "words" ? "Words" : "Sentences"}${r.complete ? "" : " · Partial"}${r.interrupted ? " · Interrupted" : ""}`;
+            label.title = new Date(r.date).toLocaleString("en-US");
+            score.className = "history-score";
+            score.textContent = `${r.wpm} wpm · ${r.accuracy}%`;
+            li.append(label, score);
+            fragment.append(li);
+          }
+          $("testHistory").replaceChildren(fragment);
+          $("clearTestHistory").disabled = !practiceHistory.length && !practiceStorageInvalid;
+          $("testHistoryNote").textContent = practiceStorageInvalid
+            ? "Saved practice data could not be read; it will not be overwritten."
+            : practiceHistory.length
+              ? "Saved only in this browser. Showing the last five attempts."
+              : "Your results will appear here. Notebook pages stay separate.";
+        }
+        // Align committed words so a skipped letter does not shift every following letter.
+        function alignWord(expected, typed, committed) {
+          if (!committed) {
+            const out = Array.from(expected, (c, j) => ({
+              glyph: j < typed.length && typed[j] !== c ? typed[j] : c,
+              expected: c,
+              status: j < typed.length ? (typed[j] === c ? "correct" : "wrong") : "pending",
+              inputIndex: j < typed.length ? j : null,
+            }));
+            for (let j = expected.length; j < typed.length; j++)
+              out.push({ glyph: typed[j], status: "extra", inputIndex: j });
+            return out;
+          }
+          const n = expected.length,
+            m = typed.length,
+            dp = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
+          for (let i = 0; i <= n; i++) dp[i][0] = i;
+          for (let j = 0; j <= m; j++) dp[0][j] = j;
+          for (let i = 1; i <= n; i++)
+            for (let j = 1; j <= m; j++)
+              dp[i][j] = Math.min(
+                dp[i - 1][j - 1] + (expected[i - 1] === typed[j - 1] ? 0 : 1),
+                dp[i - 1][j] + 1,
+                dp[i][j - 1] + 1,
+              );
+          let i = n,
+            j = m;
+          const out = [];
+          while (i || j) {
+            if (
+              i &&
+              j &&
+              dp[i][j] === dp[i - 1][j - 1] + (expected[i - 1] === typed[j - 1] ? 0 : 1)
+            ) {
+              out.push({
+                glyph: expected[i - 1] === typed[j - 1] ? expected[i - 1] : typed[j - 1],
+                expected: expected[i - 1],
+                status: expected[i - 1] === typed[j - 1] ? "correct" : "wrong",
+                inputIndex: j - 1,
+              });
+              i--;
+              j--;
+            } else if (i && dp[i][j] === dp[i - 1][j] + 1) {
+              out.push({ glyph: expected[i - 1], status: "skipped", inputIndex: null });
+              i--;
+            } else {
+              out.push({ glyph: typed[j - 1], status: "extra", inputIndex: j - 1 });
+              j--;
+            }
+          }
+          return out.reverse();
+        }
+        function evaluatePractice(commitCurrent = false) {
+          const typed = practiceBuffer.split(" ");
+          let correct = 0,
+            wrong = 0,
+            skipped = 0,
+            extra = 0,
+            visited = 0;
+          const words = referenceWords.map((word, i) => {
+            const t = typed[i] || "",
+              committed =
+                i < typed.length - 1 || (commitCurrent && i === typed.length - 1 && t.length > 0),
+              ops = alignWord(word, t, committed);
+            for (const op of ops) {
+              if (op.status === "correct") {
+                correct++;
+                visited++;
+              } else if (op.status === "wrong") {
+                wrong++;
+                visited++;
+              } else if (op.status === "skipped") {
+                skipped++;
+                visited++;
+              } else if (op.status === "extra") extra++;
+            }
+            const hasSpace = i < referenceWords.length - 1 && i < typed.length - 1;
+            if (hasSpace) {
+              correct++;
+              visited++;
+            }
+            return { word, t, committed, ops, hasSpace };
+          });
+          for (let i = referenceWords.length; i < typed.length; i++)
+            extra += typed[i].length + (i < typed.length - 1 ? 1 : 0);
+          const denominator = visited + extra,
+            accuracy = denominator ? Math.round((correct / denominator) * 1000) / 10 : 0,
+            progress = practiceTarget.length
+              ? Math.min(100, Math.floor((visited / practiceTarget.length) * 100))
+              : 0;
+          return {
+            words,
+            correct,
+            wrong,
+            skipped,
+            extra,
+            mistakes: wrong + skipped + extra,
+            visited,
+            accuracy,
+            progress,
+          };
+        }
+        function elapsedPractice() {
+          return practicePhase === "ready"
+            ? 0
+            : practicePhase === "done"
+              ? practiceElapsed
+              : Math.max(0, Date.now() - practiceStart);
+        }
+        function practiceScore() {
+          const model = evaluatePractice(practicePhase === "done"),
+            ms = elapsedPractice();
+          return {
+            ...model,
+            wpm: ms >= 1000 ? Math.round(model.correct / 5 / (ms / 60000)) : 0,
+            raw: ms >= 1000 ? Math.round(practiceAttempts / 5 / (ms / 60000)) : 0,
+            elapsed: ms,
+          };
+        }
+        function showPracticeMetrics() {
+          const s = practiceScore();
+          $("testProgressValue").textContent = s.progress;
+          $("testWpm").textContent = s.wpm;
+          $("testAccuracy").textContent = s.visited || s.extra ? s.accuracy : "—";
+          $("testErrors").textContent = s.mistakes;
+          $("testProgress").style.width = s.progress + "%";
+          const seconds = Math.floor(s.elapsed / 1000);
+          $("elapsedDisplay").textContent =
+            `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+          return s;
+        }
+        function renderPracticePassage() {
+          const model = evaluatePractice(practicePhase === "done"),
+            fragment = document.createDocumentFragment();
+          practiceNodes = [];
+          model.words.forEach((w, i) => {
+            const group = document.createElement("span");
+            group.className = "test-word";
+            if (
+              options.highlight === "word" &&
+              w.ops.some((op) => ["wrong", "skipped", "extra"].includes(op.status))
+            )
+              group.classList.add("word-wrong");
+            const nodes = [];
+            for (const op of w.ops) {
+              const span = document.createElement("span");
+              span.className = "test-char " + op.status;
+              span.textContent = op.glyph;
+              span.dataset.word = String(i);
+              if (op.inputIndex !== null) span.dataset.inputIndex = String(op.inputIndex);
+              span.title =
+                op.status === "skipped"
+                  ? "Skipped letter"
+                  : op.status === "wrong"
+                    ? `Incorrect letter; expected ${op.expected}`
+                    : op.status === "extra"
+                      ? "Extra letter"
+                      : "";
+              group.append(span);
+              nodes.push({ el: span, ...op });
+            }
+            const space = document.createElement("span");
+            space.className = "test-char " + (w.hasSpace ? "correct" : "pending");
+            space.textContent = i < referenceWords.length - 1 ? " " : "";
+            fragment.append(group, space);
+            practiceNodes.push({ group, nodes, space });
+          });
+          passage.replaceChildren(fragment);
+          if (!$("testScreen").hidden) {
+            if (options.display === "tape") surface.style.height = "92px";
+            else {
+              surface.style.height = "180px";
+              const last = practiceNodes.at(-1)?.nodes.at(-1)?.el;
+              if (last) {
+                const contentHeight =
+                  last.getBoundingClientRect().bottom -
+                  passage.getBoundingClientRect().top +
+                  passage.scrollTop +
+                  20;
+                surface.style.height = Math.min(180, Math.max(80, contentHeight)) + "px";
+              }
+            }
+          }
+          $("testReference").textContent = practiceTarget;
+          positionPracticeCaret(true);
+          showNextKey();
+        }
+        function caretContext() {
+          const pos = input.selectionStart ?? practiceBuffer.length,
+            before = practiceBuffer.slice(0, pos),
+            parts = before.split(" "),
+            wi = Math.min(parts.length - 1, referenceWords.length - 1),
+            column = parts.at(-1).length,
+            word = practiceNodes[wi];
+          if (!word) return null;
+          let item = word.nodes.find((op) => op.inputIndex === column);
+          if (!item && column < (referenceWords[wi] || "").length)
+            item = word.nodes.find((op) => op.status === "pending") || word.nodes[column];
+          if (item) return { el: item.el, after: false, wi, column };
+          if (word.nodes.length) return { el: word.nodes.at(-1).el, after: true, wi, column };
+          return { el: word.group, after: false, wi, column };
+        }
+        function positionPracticeCaret(ensure = false) {
+          if (practicePhase === "done") {
+            $("typingCaret").hidden = true;
+            return;
+          }
+          $("typingCaret").hidden = false;
+          const at = caretContext();
+          if (!at) return;
+          let box = at.el.getBoundingClientRect(),
+            frame = surface.getBoundingClientRect();
+          if (ensure) {
+            if (options.display === "tape") {
+              const left = box.left - frame.left;
+              if (left > frame.width * 0.7 || left < 8)
+                passage.scrollLeft += left - frame.width * 0.28;
+            } else if (box.bottom > frame.bottom - 12 || box.top < frame.top + 4)
+              passage.scrollTop += box.top - frame.top - 24;
+            box = at.el.getBoundingClientRect();
+          }
+          const x = (at.after ? box.right : box.left) - frame.left,
+            y = box.top - frame.top + 2;
+          $("typingCaret").style.height = Math.max(18, box.height - 2) + "px";
+          $("typingCaret").style.transform =
+            `translate3d(${Math.max(2, x)}px,${Math.max(2, y)}px,0)`;
+        }
+        const keyboardRows = [
+          [
+            ["Digit1", "1"],
+            ["Digit2", "2"],
+            ["Digit3", "3"],
+            ["Digit4", "4"],
+            ["Digit5", "5"],
+            ["Digit6", "6"],
+            ["Digit7", "7"],
+            ["Digit8", "8"],
+            ["Digit9", "9"],
+            ["Digit0", "0"],
+            ["Minus", "-"],
+            ["Equal", "="],
+          ],
+          [
+            ["KeyQ", "Q"],
+            ["KeyW", "W"],
+            ["KeyE", "E"],
+            ["KeyR", "R"],
+            ["KeyT", "T"],
+            ["KeyY", "Y"],
+            ["KeyU", "U"],
+            ["KeyI", "I"],
+            ["KeyO", "O"],
+            ["KeyP", "P"],
+            ["BracketLeft", "["],
+            ["BracketRight", "]"],
+          ],
+          [
+            ["KeyA", "A"],
+            ["KeyS", "S"],
+            ["KeyD", "D"],
+            ["KeyF", "F"],
+            ["KeyG", "G"],
+            ["KeyH", "H"],
+            ["KeyJ", "J"],
+            ["KeyK", "K"],
+            ["KeyL", "L"],
+            ["Semicolon", ";"],
+            ["Quote", "'"],
+            ["Backspace", "Bksp"],
+          ],
+          [
+            ["ShiftLeft", "Shift"],
+            ["KeyZ", "Z"],
+            ["KeyX", "X"],
+            ["KeyC", "C"],
+            ["KeyV", "V"],
+            ["KeyB", "B"],
+            ["KeyN", "N"],
+            ["KeyM", "M"],
+            ["Comma", ","],
+            ["Period", "."],
+            ["Slash", "/"],
+            ["ShiftRight", "Shift"],
+          ],
+          [["Space", "Space"]],
+        ];
+        let keyTimers = new Map(),
+          pressedKeys = new Set();
+        function buildPracticeKeyboard() {
+          const frag = document.createDocumentFragment();
+          keyboardRows.forEach((row, i) => {
+            if (i === 0 && !options.numbers) return;
+            const line = document.createElement("div");
+            line.className = "keyboard-row";
+            row.forEach(([code, label]) => {
+              const key = document.createElement("span");
+              key.className =
+                "kb-key" +
+                (["Backspace", "ShiftLeft", "ShiftRight"].includes(code)
+                  ? " wide"
+                  : code === "Space"
+                    ? " space"
+                    : "");
+              key.dataset.code = code;
+              if (pressedKeys.has(code)) key.classList.add("pressed");
+              key.textContent = label;
+              line.append(key);
+            });
+            frag.append(line);
+          });
+          $("virtualKeyboard").replaceChildren(frag);
+          showNextKey();
+        }
+        function codesForChar(c) {
+          if (!c) return [];
+          if (/[a-z]/i.test(c))
+            return (c === c.toUpperCase() ? ["ShiftLeft"] : []).concat("Key" + c.toUpperCase());
+          if (/[0-9]/.test(c)) return ["Digit" + c];
+          const map = {
+            " ": ["Space"],
+            ",": ["Comma"],
+            ".": ["Period"],
+            ";": ["Semicolon"],
+            ":": ["ShiftLeft", "Semicolon"],
+            "'": ["Quote"],
+            '"': ["ShiftLeft", "Quote"],
+            "/": ["Slash"],
+            "?": ["ShiftLeft", "Slash"],
+            "!": ["ShiftLeft", "Digit1"],
+            "-": ["Minus"],
+            "(": ["ShiftLeft", "Digit9"],
+            ")": ["ShiftLeft", "Digit0"],
+          };
+          return map[c] || [];
+        }
+        function lightPracticeKey(code, release = true) {
+          if (!options.keyboard || !code) return;
+          clearTimeout(keyTimers.get(code));
+          pressedKeys.add(code);
+          for (const key of document.querySelectorAll(".kb-key"))
+            if (key.dataset.code === code) key.classList.add("pressed");
+          $("keyFeedback").textContent =
+            code === "Space"
+              ? "Space"
+              : code === "Backspace"
+                ? "Backspace"
+                : code.startsWith("Key")
+                  ? code.slice(3)
+                  : code.startsWith("Digit")
+                    ? code.slice(5)
+                    : code.replace("Left", "").replace("Right", "");
+          if (release)
+            keyTimers.set(
+              code,
+              setTimeout(() => releasePracticeKey(code), 140),
+            );
+        }
+        function releasePracticeKey(code) {
+          pressedKeys.delete(code);
+          for (const key of document.querySelectorAll(".kb-key"))
+            if (key.dataset.code === code) key.classList.remove("pressed");
+          if (!pressedKeys.size) $("keyFeedback").textContent = "Ready";
+        }
+        function clearPracticeKeys() {
+          for (const t of keyTimers.values()) clearTimeout(t);
+          keyTimers.clear();
+          pressedKeys.clear();
+          document
+            .querySelectorAll(".kb-key.pressed")
+            .forEach((k) => k.classList.remove("pressed"));
+          $("keyFeedback").textContent = "Ready";
+        }
+        function showNextKey() {
+          document
+            .querySelectorAll(".kb-key.expected")
+            .forEach((k) => k.classList.remove("expected"));
+          if (!options.guide || practicePhase === "done") return;
+          const before = practiceBuffer.slice(0, input.selectionStart ?? practiceBuffer.length),
+            parts = before.split(" "),
+            wi = parts.length - 1,
+            col = parts.at(-1).length,
+            c = (referenceWords[wi] || "")[col] || (wi < referenceWords.length - 1 ? " " : null);
+          for (const code of codesForChar(c))
+            document.querySelectorAll(".kb-key").forEach((k) => {
+              if (k.dataset.code === code) k.classList.add("expected");
+            });
+        }
+        function applyPracticeOptions() {
+          surface.dataset.display = options.display;
+          surface.dataset.highlight = options.highlight;
+          surface.style.setProperty(
+            "--practice-size",
+            { small: 17, regular: 19, large: 22 }[options.size] + "px",
+          );
+          document.body.dataset.practiceSmooth = String(options.smooth);
+          $("speedMetric").hidden = !options.showWpm;
+          $("elapsedLabel").hidden = !options.showElapsed;
+          $("keyboardPanel").hidden = !options.keyboard || practicePhase === "done";
+          $("practiceDisplay").value = options.display;
+          $("practiceHighlight").value = options.highlight;
+          $("practiceSize").value = options.size;
+          for (const [id, key] of [
+            ["practicePunctuation", "punctuation"],
+            ["practiceNumbers", "numbers"],
+            ["practiceWpm", "showWpm"],
+            ["practiceElapsed", "showElapsed"],
+            ["practiceKeyboard", "keyboard"],
+            ["practiceGuide", "guide"],
+            ["practiceSmooth", "smooth"],
+          ])
+            $(id).checked = options[key];
+          $("practiceGuide").disabled = !options.keyboard;
+          document.querySelectorAll("[data-level]").forEach((b) => {
+            b.setAttribute("aria-pressed", String(b.dataset.level === options.level));
+            b.disabled = practicePhase === "running";
+          });
+          document.querySelectorAll("[data-kind]").forEach((b) => {
+            b.setAttribute("aria-pressed", String(b.dataset.kind === options.kind));
+            b.disabled = practicePhase === "running";
+          });
+          $("practicePunctuation").disabled = practicePhase === "running";
+          $("practiceNumbers").disabled = practicePhase === "running";
+          buildPracticeKeyboard();
+          renderPracticePassage();
+        }
+        function preparePractice(focus = false) {
+          clearInterval(practiceTicker);
+          practiceTicker = null;
+          clearPracticeKeys();
+          practicePhase = "ready";
+          practiceStart = 0;
+          practiceElapsed = 0;
+          practiceBuffer = "";
+          practiceAttempts = 0;
+          practiceInterrupted = false;
+          practiceTarget = createSample();
+          referenceWords = practiceTarget.split(" ");
+          input.value = "";
+          input.disabled = false;
+          input.readOnly = false;
+          $("testResults").hidden = true;
+          $("testArena").hidden = false;
+          $("finishPractice").hidden = false;
+          $("finishPractice").disabled = true;
+          $("testPhaseText").textContent = "Click the passage and begin. There is no time limit.";
+          $("sampleLength").textContent =
+            referenceWords.length +
+            " words · " +
+            options.level[0].toUpperCase() +
+            options.level.slice(1);
+          passage.scrollTop = 0;
+          passage.scrollLeft = 0;
+          applyPracticeOptions();
+          showPracticeMetrics();
+          if (focus) input.focus({ preventScroll: true });
+        }
+        function startPractice() {
+          practicePhase = "running";
+          practiceStart = Date.now();
+          $("finishPractice").disabled = false;
+          $("testPhaseText").textContent =
+            "Keep a steady pace. Finish the passage, or choose Finish here.";
+          applyPracticeOptions();
+          practiceTicker = setInterval(() => {
+            if (practicePhase === "running") showPracticeMetrics();
+          }, 200);
+        }
+        function finishPractice() {
+          if (practicePhase !== "running") return;
+          practiceElapsed = Math.max(0, Date.now() - practiceStart);
+          practicePhase = "done";
+          clearInterval(practiceTicker);
+          practiceTicker = null;
+          clearPracticeKeys();
+          input.readOnly = true;
+          input.disabled = true;
+          surface.classList.remove("focused");
+          $("testResults").hidden = false;
+          $("finishPractice").hidden = true;
+          $("keyboardPanel").hidden = true;
+          applyPracticeOptions();
+          renderPracticePassage();
+          const s = showPracticeMetrics(),
+            complete = s.progress === 100,
+            row = {
+              id: makeId(),
+              date: today(),
+              level: options.level,
+              kind: options.kind,
+              punctuation: options.punctuation,
+              numbers: options.numbers,
+              complete,
+              interrupted: practiceInterrupted,
+              wpm: s.wpm,
+              raw: s.raw,
+              accuracy: s.accuracy,
+              progress: s.progress,
+              elapsed: s.elapsed,
+            };
+          $("resultsTitle").textContent = complete ? "Passage complete." : "Practice finished.";
+          $("testPhaseText").textContent = complete
+            ? "Finished. Review any red letters below."
+            : "Finished early. Unreached text stays muted.";
+          const ss = Math.floor(s.elapsed / 1000);
+          $("testSummary").textContent =
+            `Reached ${s.progress}% · ${s.correct} correct characters · ${s.wrong} incorrect · ${s.skipped} skipped · ${s.extra} extra. Raw speed: ${s.raw} wpm. Time taken: ${String(Math.floor(ss / 60)).padStart(2, "0")}:${String(ss % 60).padStart(2, "0")}.` +
+            (practiceInterrupted ? " This attempt was interrupted." : "") +
+            (s.elapsed < 1000 ? " Too short to measure speed reliably." : "");
+          const prior = practiceHistory.filter(
+            (r) =>
+              r.complete &&
+              !r.interrupted &&
+              r.elapsed >= 1000 &&
+              r.accuracy >= 90 &&
+              r.level === row.level &&
+              r.kind === row.kind &&
+              r.punctuation === row.punctuation &&
+              r.numbers === row.numbers,
+          );
+          const best = prior.length ? Math.max(...prior.map((r) => r.wpm)) : null;
+          $("testBest").textContent = !complete
+            ? "Partial attempts are not compared for personal bests."
+            : practiceInterrupted
+              ? "Interrupted attempts are not compared for personal bests."
+              : s.elapsed < 1000
+                ? "Practice for at least one second to measure speed."
+                : s.accuracy < 90
+                  ? "Complete the passage with at least 90% accuracy for a personal best."
+                  : best === null
+                    ? "First completed passage with these settings."
+                    : s.wpm > best
+                      ? `New personal best · previous best ${best} wpm`
+                      : `Personal best with these settings: ${Math.max(best, s.wpm)} wpm`;
+          practiceHistory = [row, ...practiceHistory].slice(0, 20);
+          const saved = storePractice();
+          renderPracticeHistory();
+          if (!saved)
+            $("testHistoryNote").textContent =
+              "This result could not be saved. It remains visible for this session.";
+          $("testAgain").focus({ preventScroll: true });
+          $("testScreen").scrollTop = 0;
+        }
+        function enterPractice() {
+          sync();
+          flush();
+          closeMobilePages();
+          document.body.dataset.mode = "test";
+          document.querySelector(".workspace").hidden = true;
+          $("testScreen").hidden = false;
+          $("notebookMode").setAttribute("aria-pressed", "false");
+          $("typingMode").setAttribute("aria-pressed", "true");
+          if (practicePhase === "ready") preparePractice();
+          if (practicePhase === "done") $("testAgain").focus({ preventScroll: true });
+          else input.focus({ preventScroll: true });
+          $("testScreen").scrollTop = 0;
+        }
+        function leavePractice() {
+          const leave = () => {
+            clearInterval(practiceTicker);
+            clearPracticeKeys();
+            if (practicePhase === "running") practicePhase = "ready";
+            document.body.dataset.mode = "notebook";
+            document.querySelector(".workspace").hidden = false;
+            $("testScreen").hidden = true;
+            $("notebookMode").setAttribute("aria-pressed", "true");
+            $("typingMode").setAttribute("aria-pressed", "false");
+            editor.focus();
+          };
+          if (practicePhase === "running")
+            ask(
+              "Leave this practice?",
+              "This unfinished attempt will be discarded. Notebook pages are safe.",
+              "Back to notebook",
+              leave,
+            );
+          else leave();
+        }
+        $("typingMode").onclick = () => {
+          if ($("testScreen").hidden) enterPractice();
+        };
+        $("notebookMode").onclick = () => {
+          if (!$("testScreen").hidden) leavePractice();
+        };
+        $("returnNotebook").onclick = leavePractice;
+        $("testRestart").onclick = () => preparePractice(true);
+        $("testAgain").onclick = () => preparePractice(true);
+        $("finishPractice").onclick = finishPractice;
+        for (const b of document.querySelectorAll("[data-level]"))
+          b.onclick = () => {
+            if (practicePhase !== "running") {
+              options.level = b.dataset.level;
+              storePractice();
+              preparePractice(true);
+            }
+          };
+        for (const b of document.querySelectorAll("[data-kind]"))
+          b.onclick = () => {
+            if (practicePhase !== "running") {
+              options.kind = b.dataset.kind;
+              storePractice();
+              preparePractice(true);
+            }
+          };
+        $("typingOptionsBtn").onclick = () => {
+          $("typingOptions").showModal();
+        };
+        $("closeTypingOptions").onclick = () => {
+          $("typingOptions").close();
+        };
+        for (const [id, key] of [
+          ["practiceDisplay", "display"],
+          ["practiceHighlight", "highlight"],
+          ["practiceSize", "size"],
+          ["practicePunctuation", "punctuation"],
+          ["practiceNumbers", "numbers"],
+          ["practiceWpm", "showWpm"],
+          ["practiceElapsed", "showElapsed"],
+          ["practiceKeyboard", "keyboard"],
+          ["practiceGuide", "guide"],
+          ["practiceSmooth", "smooth"],
+        ])
+          $(id).addEventListener("change", () => {
+            const altersText = ["punctuation", "numbers"].includes(key);
+            if (altersText && practicePhase === "running") return;
+            options[key] = $(id).type === "checkbox" ? $(id).checked : $(id).value;
+            storePractice();
+            if (altersText) preparePractice();
+            else applyPracticeOptions();
+          });
+        input.addEventListener("focus", () => {
+          surface.classList.add("focused");
+          requestAnimationFrame(() => positionPracticeCaret(true));
+        });
+        input.addEventListener("blur", () => {
+          surface.classList.remove("focused");
+          clearPracticeKeys();
+        });
+        input.addEventListener("select", () => {
+          requestAnimationFrame(() => {
+            positionPracticeCaret(false);
+            showNextKey();
+          });
+        });
+        passage.addEventListener("scroll", () => {
+          cancelAnimationFrame(caretFrame);
+          caretFrame = requestAnimationFrame(() => positionPracticeCaret(false));
+        });
+        window.addEventListener("resize", () => {
+          if (!$("testScreen").hidden) renderPracticePassage();
+        });
+        input.addEventListener(
+          "wheel",
+          (e) => {
+            if (
+              passage.scrollHeight > passage.clientHeight + 2 ||
+              (options.display === "tape" && passage.scrollWidth > passage.clientWidth + 2)
+            ) {
+              e.preventDefault();
+              if (options.display === "tape") passage.scrollLeft += e.deltaY || e.deltaX;
+              else passage.scrollTop += e.deltaY;
+            }
+          },
+          { passive: false },
+        );
+        for (const type of ["copy", "cut", "paste", "drop"])
+          input.addEventListener(type, (e) => {
+            e.preventDefault();
+            $("testPhaseText").textContent = "Copy, cut, paste and drop are disabled in practice.";
+          });
+        input.addEventListener("beforeinput", (e) => {
+          if (
+            practicePhase === "done" ||
+            [
+              "insertFromPaste",
+              "insertFromDrop",
+              "deleteByCut",
+              "insertReplacementText",
+              "insertLineBreak",
+            ].includes(e.inputType) ||
+            (e.data && /[^\x20-\x7E]/.test(e.data))
+          ) {
+            e.preventDefault();
+            if (practicePhase !== "done")
+              $("testPhaseText").textContent =
+                "Use English letters, spaces and punctuation. Paste and autocorrect are disabled.";
+          }
+        });
+        input.addEventListener("input", () => {
+          if (practicePhase === "done") {
+            input.value = practiceBuffer;
+            return;
+          }
+          const next = input.value;
+          if (/[^\x20-\x7E]/.test(next)) {
+            input.value = practiceBuffer;
+            $("testPhaseText").textContent = "English only. Use spaces instead of line breaks.";
+            return;
+          }
+          let prefix = 0;
+          while (
+            prefix < practiceBuffer.length &&
+            prefix < next.length &&
+            practiceBuffer[prefix] === next[prefix]
+          )
+            prefix++;
+          let suffix = 0;
+          while (
+            suffix < practiceBuffer.length - prefix &&
+            suffix < next.length - prefix &&
+            practiceBuffer[practiceBuffer.length - 1 - suffix] === next[next.length - 1 - suffix]
+          )
+            suffix++;
+          const inserted = next.slice(prefix, next.length - suffix);
+          if (practicePhase === "ready" && !inserted) {
+            practiceBuffer = next;
+            return;
+          }
+          practiceAttempts += inserted.length;
+          practiceBuffer = next;
+          if (practicePhase === "ready") startPractice();
+          for (const code of codesForChar(inserted.at(-1))) {
+            if (code === "ShiftLeft" && pressedKeys.has("ShiftRight")) continue;
+            lightPracticeKey(code, !pressedKeys.has(code));
+          }
+          renderPracticePassage();
+          showPracticeMetrics();
+          const tokens = practiceBuffer.split(" "),
+            last = referenceWords.length - 1;
+          if (
+            tokens.length > referenceWords.length ||
+            (tokens.length === referenceWords.length &&
+              tokens[last].length >= referenceWords[last].length)
+          )
+            finishPractice();
+        });
+        input.addEventListener("keydown", (e) => {
+          lightPracticeKey(e.code, false);
+          requestAnimationFrame(() => positionPracticeCaret(false));
+        });
+        input.addEventListener("keyup", (e) => {
+          clearTimeout(keyTimers.get(e.code));
+          keyTimers.set(
+            e.code,
+            setTimeout(() => releasePracticeKey(e.code), 90),
+          );
+          positionPracticeCaret(false);
+          showNextKey();
+        });
+        document.addEventListener("keydown", (e) => {
+          if (
+            !$("testScreen").hidden &&
+            !$("typingOptions").open &&
+            !$("settings").open &&
+            !$("confirmation").open &&
+            (e.ctrlKey || e.metaKey) &&
+            e.key === "Enter"
+          ) {
+            e.preventDefault();
+            preparePractice(true);
+          }
+        });
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden && practicePhase === "running") practiceInterrupted = true;
+        });
+        $("clearTestHistory").onclick = () =>
+          ask(
+            "Clear practice history?",
+            "Only the new practice results will be cleared. Notebook pages and previous timed-test results are unaffected.",
+            "Clear history",
+            () => {
+              try {
+                localStorage.setItem(
+                  PRACTICE_KEY,
+                  JSON.stringify({ version: 2, options, results: [] }),
+                );
+                practiceHistory = [];
+                practiceStorageInvalid = false;
+                renderPracticeHistory();
+                $("practiceOptionsNotice").textContent = "";
+              } catch (e) {
+                $("testHistoryNote").textContent =
+                  "History could not be cleared. Storage may be unavailable.";
+              }
+            },
+          );
+        readPractice();
+        preparePractice();
+      })();
+    </script>
+  </body>
+</html>
